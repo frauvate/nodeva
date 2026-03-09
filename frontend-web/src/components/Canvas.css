@@ -1,0 +1,73 @@
+.canvas-container {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+}
+
+.edges-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.nodes-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.canvas-node {
+    position: absolute;
+    width: 250px;
+    min-height: 120px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    cursor: grab;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: box-shadow 0.2s;
+    user-select: none;
+    touch-action: none;
+}
+
+.canvas-node:active {
+    cursor: grabbing;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.node-title {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+
+.node-content {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #555;
+    white-space: pre-wrap;
+}
+
+.connection-handle {
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background: var(--node-blue);
+    border: 2px solid #0D47A1;
+    border-radius: 50%;
+    cursor: crosshair;
+}
+
+.connection-handle:hover {
+    transform: translateY(-50%) scale(1.2);
+    background: #0D47A1;
+}
