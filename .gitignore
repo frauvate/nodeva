@@ -29,6 +29,10 @@ frontend-web/dist/
 frontend-web/.vite/
 frontend-web/.cache/
 
+frontend_mobile/node_modules/
+frontend_mobile/.expo/
+frontend_mobile/dist/
+
 # ========================
 # OS & Editor
 # ========================
