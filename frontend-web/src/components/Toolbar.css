@@ -1,0 +1,82 @@
+.toolbar {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    gap: 24px;
+    z-index: 100;
+}
+
+.drag-items {
+    display: flex;
+    gap: 12px;
+    padding-right: 24px;
+    border-right: 1px solid var(--glass-border);
+}
+
+.drag-item {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    user-select: none;
+}
+
+.drag-item:active {
+    cursor: grabbing;
+}
+
+.node-task {
+    background-color: var(--node-blue);
+    color: #0D47A1;
+    border: 1px solid #BBDEFB;
+}
+
+.node-note {
+    background-color: var(--node-green);
+    color: #1B5E20;
+    border: 1px solid #C8E6C9;
+}
+
+.ai-section {
+    display: flex;
+    gap: 8px;
+}
+
+.ai-input {
+    width: 250px;
+    padding: 8px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.ai-input:focus {
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+}
+
+.ai-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ce93d8 0%, #ab47bc 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(171, 71, 188, 0.3);
+    transition: transform 0.1s;
+}
+
+.ai-btn:active {
+    transform: scale(0.95);
+}
