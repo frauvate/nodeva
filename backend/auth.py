@@ -12,9 +12,13 @@ security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
+    # Mock token validation
+    if token == "mock-jwt-token-123":
+        return {"id": "dev-user-id", "email": "test@test.com"}
+    
     if not supabase:
-        # Development fallback if supabase is not setup properly
-        return {"id": "dev-user-id"}
+        raise HTTPException(status_code=401, detail="Supabase not configured")
+        
     try:
         user = supabase.auth.get_user(token)
         if not user or not user.user:

@@ -12,7 +12,9 @@ router = APIRouter(prefix="/boards", tags=["Boards"])
 def serialize_doc(doc):
     if not doc:
         return None
-    doc["_id"] = str(doc["_id"])
+    doc["id"] = str(doc.get("_id") or doc.get("id") or "")
+    if "_id" in doc:
+        del doc["_id"]
     return doc
 
 @router.get("/", response_model=List[Board])

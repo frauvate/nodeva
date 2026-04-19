@@ -1,9 +1,15 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-// In Expo, localhost refers to the device itself. 
-// Use 10.0.2.2 for Android emulator or your machine's IP for real devices.
-const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+// Default back-end URL. On Android emulator, 10.0.2.2 points to host machine.
+// On real devices, replace with your machine's local IP (e.g. 192.168.1.XX).
+const DEV_URL = Platform.select({
+  android: 'http://10.0.2.2:8000',
+  ios: 'http://localhost:8000', // Default for simulator
+  default: 'http://localhost:8000',
+});
+
+export const BASE_URL = DEV_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -25,6 +31,13 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+export const authAPI = {
+  login: (email: string, password: string) => 
+    api.post('/auth/login', { email, password }).then((res) => res.data),
+  register: (email: string, password: string) => 
+    api.post('/auth/register', { email, password }).then((res) => res.data),
+};
 
 export const boardAPI = {
   getBoards: () => api.get('/boards/').then((res) => res.data),

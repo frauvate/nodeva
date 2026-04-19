@@ -28,7 +28,7 @@ class BoardCreate(BaseModel):
     title: str
 
 class Board(BaseModel):
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: str
     user_id: str
     title: str
     nodes: List[Node] = []

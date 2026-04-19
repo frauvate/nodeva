@@ -72,6 +72,20 @@ const Dashboard: React.FC = () => {
         setRefreshKey(old => old + 1);
     };
 
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        return (localStorage.getItem('theme') as 'light' | 'dark') || 
+               (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    };
+
     return (
         <>
             <div className="app-layout">
@@ -82,6 +96,8 @@ const Dashboard: React.FC = () => {
                     onCreateBoard={() => setShowCreateModal(true)}
                     onDeleteBoard={(id, title) => setDeleteTarget({ id, title })}
                     userEmail={userEmail}
+                    theme={theme}
+                    onToggleTheme={toggleTheme}
                 />
                 <div className="main-content">
                     {activeBoardId ? (

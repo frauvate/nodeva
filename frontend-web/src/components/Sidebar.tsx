@@ -9,6 +9,8 @@ interface SidebarProps {
     onCreateBoard: () => void;
     onDeleteBoard: (id: string, title: string) => void;
     userEmail: string;
+    theme: 'light' | 'dark';
+    onToggleTheme: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -18,6 +20,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     onCreateBoard,
     onDeleteBoard,
     userEmail,
+    theme,
+    onToggleTheme,
 }) => {
     const [isOpen, setIsOpen] = useState(true);
 
@@ -30,7 +34,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
         <div className={`sidebar glass-panel ${isOpen ? 'open' : 'closed'}`}>
             <div className="sidebar-header">
-                <h2 className="brand">Nodeva</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h2 className="brand">Nodeva</h2>
+                    <button className="theme-toggle" onClick={onToggleTheme} title="Temayı değiştir">
+                        {theme === 'light' ? '🌙' : '☀️'}
+                    </button>
+                </div>
                 <button className="toggle-btn" onClick={() => setIsOpen(!isOpen)}>
                     {isOpen ? '◀' : '▶'}
                 </button>

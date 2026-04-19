@@ -1,8 +1,10 @@
 :root {
-  /* Colors */
+  /* Colors - Light Mode (Default) */
   --bg-color: #FAFAFA;
-  --text-dark: #333333;
+  --text-primary: #333333;
+  --text-secondary: #666666;
   --text-black: #000000;
+  --border-color: #EEEEEE;
   
   /* Node Pastel Colors */
   --node-blue: #E3F2FD;
@@ -18,21 +20,43 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.3);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --dot-color: rgba(0, 0, 0, 0.1);
+
+  --transition-speed: 0.3s;
+}
+
+[data-theme='dark'] {
+  --bg-color: #121212;
+  --text-primary: #E0E0E0;
+  --text-secondary: #B0B0B0;
+  --text-black: #FFFFFF;
+  --border-color: #2C2C2C;
+
+  --glass-bg: rgba(30, 30, 30, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --dot-color: rgba(255, 255, 255, 0.1);
+
+  /* Darker Pastels for better contrast in dark mode */
+  --node-blue: #1A3A5A;
+  --node-green: #1B4332;
+  --node-purple: #4A148C;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
 }
 
 body {
   font-family: var(--font-ui);
-  color: var(--text-dark);
+  color: var(--text-primary);
   background-color: var(--bg-color);
   
-  /* Dot Grid Background - 10% Opacity Light Gray Dots */
-  background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  /* Dot Grid Background */
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
   background-size: 20px 20px;
   
   height: 100vh;
