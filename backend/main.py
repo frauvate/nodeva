@@ -11,6 +11,8 @@ app = FastAPI(title="Dijital İş Akışı Yöneticisi API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:8081", 
         "http://127.0.0.1:8081",
         "http://0.0.0.0:8081",
@@ -32,6 +34,8 @@ def health_check():
 
 from routes.boards import router as boards_router
 from routes.auth import router as auth_router
+from routes.teams import router as teams_router
 
 app.include_router(auth_router)
 app.include_router(boards_router)
+app.include_router(teams_router)

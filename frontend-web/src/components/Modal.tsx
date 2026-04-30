@@ -31,19 +31,24 @@ export const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
 
 /* ── Create Board Modal ────────────────────────────────────────── */
 interface CreateBoardModalProps {
-    onConfirm: (title: string) => void;
+    onConfirm: (title: string, teamId?: string) => void;
     onClose: () => void;
+    ownedTeams?: { id: string; name: string }[];
 }
 
-export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, onClose }) => {
+export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, onClose, ownedTeams = [] }) => {
     const [value, setValue] = useState('');
+    const [teamId, setTeamId] = useState<string>('');
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => { inputRef.current?.focus(); }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (value.trim()) { onConfirm(value.trim()); onClose(); }
+        if (value.trim()) { 
+            onConfirm(value.trim(), teamId || undefined); 
+            onClose(); 
+        }
     };
 
     return (
@@ -58,6 +63,21 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, o
                     className="modal-input"
                     maxLength={60}
                 />
+                
+                {ownedTeams.length > 0 && (
+                    <select 
+                        value={teamId} 
+                        onChange={e => setTeamId(e.target.value)}
+                        className="modal-input"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <option value="">Kişisel Pano</option>
+                        {ownedTeams.map(t => (
+                            <option key={t.id} value={t.id}>{t.name} Ekibi</option>
+                        ))}
+                    </select>
+                )}
+                
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                     <button type="button" className="modal-btn-secondary" onClick={onClose}>İptal</button>
                     <button type="submit" className="modal-btn-primary" disabled={!value.trim()}>Oluştur</button>

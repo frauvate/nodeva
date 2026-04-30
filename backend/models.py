@@ -24,12 +24,30 @@ class Edge(BaseModel):
     source: str
     target: str
 
+class Team(BaseModel):
+    id: str
+    name: str
+    owner_id: str
+    members: List[str] = [] # list of user emails
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class TeamRequest(BaseModel):
+    id: str
+    team_id: str
+    team_name: str
+    sender_id: str
+    recipient_email: str
+    status: str = "pending" # pending, accepted, rejected
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 class BoardCreate(BaseModel):
     title: str
+    team_id: Optional[str] = None
 
 class Board(BaseModel):
     id: str
     user_id: str
+    team_id: Optional[str] = None
     title: str
     nodes: List[Node] = []
     edges: List[Edge] = []

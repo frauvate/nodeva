@@ -1,46 +1,99 @@
-:root {
-  /* Colors - Light Mode (Default) */
-  --bg-color: #FAFAFA;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-black: #000000;
-  --border-color: #EEEEEE;
-  
-  /* Node Pastel Colors */
-  --node-blue: #E3F2FD;
-  --node-green: #E8F5E9;
-  --node-purple: #F3E5F5;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&family=Roboto:wght@400;500&display=swap');
 
-  /* Typography */
+:root {
+  /* ── Light Mode Colors ── */
+  --bg-color: #ffffff;
+  --panel-bg: rgba(255, 255, 255, 0.85);
+  --text-primary: #1e1e2e;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --text-black: #0f1117;
+  --border-color: rgba(0, 0, 0, 0.06);
+
+  /* ── Node Pastel Colors ── */
+  --node-blue: #dbeafe;
+  --node-green: #dcfce7;
+  --node-purple: #f3e8ff;
+  --node-yellow: #fef9c3;
+  --node-pink: #fce7f3;
+  --node-orange: #ffedd5;
+  --node-text-blue: #1d4ed8;
+  --node-text-green: #15803d;
+  --node-border-blue: #bfdbfe;
+  --node-border-green: #bbf7d0;
+
+  /* ── Typography ── */
   --font-heading: 'Poppins', sans-serif;
   --font-ui: 'Inter', sans-serif;
   --font-body: 'Roboto', sans-serif;
 
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.3);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-  --dot-color: rgba(0, 0, 0, 0.1);
+  /* ── Glassmorphism Tokens ── */
+  /* Very subtle orbs — barely visible */
+  --orb-1: rgba(99, 102, 241, 0.06);
+  --orb-2: rgba(168, 85, 247, 0.05);
 
-  --transition-speed: 0.3s;
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg-strong: rgba(255, 255, 255, 0.90);
+  --glass-border: rgba(0, 0, 0, 0.07);
+  --glass-border-subtle: rgba(99, 102, 241, 0.12);
+  --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --glass-shadow-raised: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --glass-shadow-node: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --glass-blur: blur(20px);
+  --glass-blur-light: blur(10px);
+
+  /* ── Accent — single hue, no multi-color gradient ── */
+  --accent-primary: #6366f1;
+  --accent-secondary: #818cf8;
+  --accent-gradient: #6366f1;                            /* solid, no gradient */
+  --accent-gradient-soft: rgba(99, 102, 241, 0.08);     /* very light tint */
+
+  --dot-color: rgba(0, 0, 0, 0.045);
+  --transition-speed: 0.25s;
 }
 
 [data-theme='dark'] {
-  --bg-color: #121212;
-  --text-primary: #E0E0E0;
-  --text-secondary: #B0B0B0;
-  --text-black: #FFFFFF;
-  --border-color: #2C2C2C;
+  /* ── Dark Mode Colors ── */
+  --bg-color: #111118;
+  --panel-bg: rgba(20, 20, 30, 0.85);
+  --text-primary: #e2e4f0;
+  --text-secondary: #8b8fa8;
+  --text-muted: #5c5f72;
+  --text-black: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.06);
 
-  --glass-bg: rgba(30, 30, 30, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  --dot-color: rgba(255, 255, 255, 0.1);
+  /* ── Glassmorphism Tokens Dark ── */
+  /* Very subtle orbs — barely visible */
+  --orb-1: rgba(99, 102, 241, 0.07);
+  --orb-2: rgba(139, 92, 246, 0.06);
 
-  /* Darker Pastels for better contrast in dark mode */
-  --node-blue: #1A3A5A;
-  --node-green: #1B4332;
-  --node-purple: #4A148C;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-subtle: rgba(129, 140, 248, 0.15);
+  --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
+  --glass-shadow-raised: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-shadow-node: 0 2px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+
+  /* ── Accent — single hue, no multi-color gradient ── */
+  --accent-primary: #818cf8;
+  --accent-secondary: #a5b4fc;
+  --accent-gradient: #818cf8;                            /* solid, no gradient */
+  --accent-gradient-soft: rgba(129, 140, 248, 0.1);     /* very light tint */
+
+  --dot-color: rgba(255, 255, 255, 0.03);
+
+  /* ── Dark Pastels — muted, harmonious with dark bg ── */
+  --node-blue: rgba(29, 78, 216, 0.18);
+  --node-green: rgba(21, 128, 61, 0.18);
+  --node-purple: rgba(124, 58, 237, 0.15);
+  --node-yellow: rgba(161, 98, 7, 0.15);
+  --node-pink: rgba(190, 18, 60, 0.15);
+  --node-orange: rgba(194, 65, 12, 0.15);
+  --node-text-blue: #93c5fd;
+  --node-text-green: #86efac;
+  --node-border-blue: rgba(59, 130, 246, 0.3);
+  --node-border-green: rgba(34, 197, 94, 0.3);
 }
 
 * {
@@ -55,13 +108,50 @@ body {
   color: var(--text-primary);
   background-color: var(--bg-color);
   
-  /* Dot Grid Background */
+  /* Very subtle dot grid */
   background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
-  background-size: 20px 20px;
-  
+  background-size: 24px 24px;
+
+  position: relative;
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* Infinite canvas handles its own scrolling/panning */
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Floating aesthetic orbs behind the UI */
+body::before, body::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  z-index: -1;
+  filter: blur(80px);
+  animation: float 20s infinite ease-in-out alternate;
+  pointer-events: none;
+}
+
+body::before {
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(circle, var(--orb-1) 0%, transparent 60%);
+  top: -30%;
+  left: -20%;
+}
+
+body::after {
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, var(--orb-2) 0%, transparent 60%);
+  bottom: -25%;
+  right: -15%;
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(3%, 4%) scale(1.04); }
+  66%  { transform: translate(-4%, 2%) scale(0.97); }
+  100% { transform: translate(2%, -5%) scale(1.02); }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -78,12 +168,48 @@ p {
   display: flex;
 }
 
-/* Base Glassmorphism Class */
+/* ── Base Glassmorphism Class ── */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
-  border-radius: 12px;
+  border-radius: 18px;
+}
+
+/* ── Glass Panel Variants ── */
+.glass-panel-raised {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-raised);
+  border-radius: 20px;
+}
+
+/* ── Dot grid overlay on canvas ── */
+.canvas-dot-grid {
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Utility: accent text ── */
+.text-accent {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Scrollbar Styling ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border-subtle);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+  opacity: 0.5;
 }
