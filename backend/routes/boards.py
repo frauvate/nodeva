@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import List
-from database import boards_collection, teams_collection
+from database import boards_collection, teams_collection, notifications_collection
 from models import Board, BoardCreate, Node, Edge
 from auth import get_current_user
-from services.ai import generate_workflow_from_prompt
+from services.ai import generate_workflow_from_prompt, rate_limiter
 from bson import ObjectId
 from datetime import datetime
 
@@ -18,11 +18,16 @@ def serialize_doc(doc):
     return doc
 
 def get_user_team_ids(user_id: str, user_email: str) -> list:
-    all_teams = teams_collection.find()
-    return [
-        t.get("id") for t in all_teams
-        if t.get("owner_id") == user_id or user_email in (t.get("members") or [])
-    ]
+    # Tüm ekipleri çekmek yerine sadece kullanıcının sahibi olduğu veya üyesi olduğu ekipleri filtrele
+    owned_teams = teams_collection.find({"owner_id": user_id})
+    member_teams = teams_collection.find({"members": user_email})
+    
+    team_ids = set()
+    for t in (owned_teams + member_teams):
+        tid = t.get("id")
+        if tid:
+            team_ids.add(tid)
+    return list(team_ids)
 
 def check_board_access(board: dict, user_id: str, user_email: str) -> bool:
     if not board:
@@ -106,6 +111,32 @@ def update_board(board_id: str, board_update: dict = Body(...), user: dict = Dep
 
     update_data["updated_at"] = datetime.utcnow()    
 
+    # ── Assignee değişiminde bildirim oluştur ──────────────────────────────
+    if "nodes" in board_update:
+        old_nodes = {n["id"]: n for n in (board.get("nodes") or [])}
+        for new_node in board_update["nodes"]:
+            node_id = new_node.get("id")
+            old_node = old_nodes.get(node_id)
+            new_assignee = (new_node.get("data") or {}).get("assignee", "")
+            old_assignee = (old_node.get("data") or {}).get("assignee", "") if old_node else ""
+            if new_assignee and new_assignee != old_assignee and new_assignee != user_email:
+                node_title = (new_node.get("data") or {}).get("title", "Görev")
+                try:
+                    notifications_collection.insert_one({
+                        "recipient_email": new_assignee,
+                        "type": "task_assigned",
+                        "title": "Size bir görev atandı",
+                        "body": f'"{node_title}" görevi size atandı.',
+                        "board_id": board_id,
+                        "node_id": node_id,
+                        "assigner_email": user_email,
+                        "read": False,
+                        "created_at": datetime.utcnow(),
+                    })
+                except Exception as e:
+                    print(f"[bildirim oluşturma hatası]: {e}")
+    # ────────────────────────────────────────────────────────────────────────
+
     boards_collection.update_one(
         {"_id": ObjectId(board_id)},
         {"$set": update_data}
@@ -129,13 +160,19 @@ def delete_board(board_id: str, user: dict = Depends(get_current_user)):
 
 @router.post("/{board_id}/generate_ai")
 def generate_ai_workflow(board_id: str, prompt: str = Body(..., embed=True), user: dict = Depends(get_current_user)):
+    print(f"\n[!!!] AI REQUEST RECEIVED for board: {board_id}")
     user_id = user.get("id")
     user_email = user.get("email")
     
     board = boards_collection.find_one({"_id": ObjectId(board_id)})
     if not board or not check_board_access(board, user_id, user_email):
         raise HTTPException(status_code=404, detail="Board not found")
-        
+
+    # ── Rate limit ön kontrolü ──
+    allowed, reason = rate_limiter.check()
+    if not allowed:
+        raise HTTPException(status_code=429, detail=reason)
+
     ai_nodes, ai_edges = generate_workflow_from_prompt(prompt)
     if not ai_nodes:
          raise HTTPException(status_code=500, detail="Failed to generate AI workflow.")
@@ -145,4 +182,9 @@ def generate_ai_workflow(board_id: str, prompt: str = Body(..., embed=True), use
         {"$set": {"nodes": ai_nodes, "edges": ai_edges, "updated_at": datetime.utcnow()}}
     )
     
-    return {"status": "success", "nodes": ai_nodes, "edges": ai_edges}
+    return {"status": "success", "nodes": ai_nodes, "edges": ai_edges, "usage": rate_limiter.get_usage()}
+
+@router.get("/ai-usage")
+def get_ai_usage(user: dict = Depends(get_current_user)):
+    """Mevcut AI kullanım bilgisini döner."""
+    return rate_limiter.get_usage()

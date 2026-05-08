@@ -1,52 +1,75 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import { supabase } from '../lib/supabase';
 
-// Default back-end URL. On Android emulator, 10.0.2.2 points to host machine.
-// On real devices, replace with your machine's local IP (e.g. 192.168.1.XX).
-const DEV_URL = Platform.select({
-  android: 'http://10.0.2.2:8000',
-  ios: 'http://localhost:8000', // Default for simulator
-  default: 'http://localhost:8000',
-});
+// Yerel ağdaki tüm cihazların (telefon dahil) bağlanabilmesi için
+// bilgisayarın yerel IP adresi kullanılıyor.
+const BASE_URL = 'http://172.20.10.2:8000';
 
-export const BASE_URL = DEV_URL;
+export { BASE_URL };
 
 const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+    baseURL: BASE_URL,
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 10000,
 });
 
-// Mocking session for now - in a real app, integrate with Supabase Auth
-let accessToken: string | null = null;
+// ── Auth Token ──────────────────────────────────────────────────
+let _accessToken: string | null = null;
 
 export const setAuthToken = (token: string | null) => {
-  accessToken = token;
+    _accessToken = token;
 };
 
 api.interceptors.request.use(async (config) => {
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  return config;
+    // Önce bellekteki token'ı dene, yoksa Supabase session'ından al
+    let token = _accessToken;
+    if (!token) {
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token ?? null;
+    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
 });
 
-export const authAPI = {
-  login: (email: string, password: string) => 
-    api.post('/auth/login', { email, password }).then((res) => res.data),
-  register: (email: string, password: string) => 
-    api.post('/auth/register', { email, password }).then((res) => res.data),
+// ── Board API ───────────────────────────────────────────────────
+export const boardAPI = {
+    getBoards: () => api.get('/boards/').then((r) => r.data),
+    getBoard: (id: string) => api.get(`/boards/${id}`).then((r) => r.data),
+    createBoard: (title: string, team_id?: string) =>
+        api.post('/boards/', { title, team_id }).then((r) => r.data),
+    updateBoard: (id: string, data: any) =>
+        api.put(`/boards/${id}`, data).then((r) => r.data),
+    deleteBoard: (id: string) => api.delete(`/boards/${id}`).then((r) => r.data),
+    generateAIWorkflow: (id: string, prompt: string) =>
+        api.post(`/boards/${id}/generate_ai`, { prompt }).then((r) => r.data),
 };
 
-export const boardAPI = {
-  getBoards: () => api.get('/boards/').then((res) => res.data),
-  getBoard: (id: string) => api.get(`/boards/${id}`).then((res) => res.data),
-  createBoard: (title: string) => api.post('/boards/', { title }).then((res) => res.data),
-  updateBoard: (id: string, data: any) => api.put(`/boards/${id}`, data).then((res) => res.data),
-  deleteBoard: (id: string) => api.delete(`/boards/${id}`).then((res) => res.data),
-  generateAIWorkflow: (id: string, prompt: string) =>
-    api.post(`/boards/${id}/generate_ai`, { prompt }).then((res) => res.data),
+// ── Team API ────────────────────────────────────────────────────
+export const teamAPI = {
+    getTeams: () => api.get('/teams/').then((r) => r.data),
+    createTeam: (name: string) => api.post('/teams/', { name }).then((r) => r.data),
+    deleteTeam: (teamId: string) => api.delete(`/teams/${teamId}`).then((r) => r.data),
+    inviteMember: (teamId: string, email: string) =>
+        api.post(`/teams/${teamId}/invite`, { email }).then((r) => r.data),
+    removeMember: (teamId: string, memberEmail: string) =>
+        api.delete(`/teams/${teamId}/members/${encodeURIComponent(memberEmail)}`).then((r) => r.data),
+    getIncomingRequests: () => api.get('/teams/requests/incoming').then((r) => r.data),
+    acceptRequest: (reqId: string) => api.post(`/teams/requests/${reqId}/accept`).then((r) => r.data),
+    rejectRequest: (reqId: string) => api.post(`/teams/requests/${reqId}/reject`).then((r) => r.data),
+};
+
+// ── Notification API ────────────────────────────────────────────
+export const notificationAPI = {
+    getNotifications: () => api.get('/notifications/').then((r) => r.data),
+    markRead: (id: string) => api.post(`/notifications/${id}/read`).then((r) => r.data),
+    markAllRead: () => api.post('/notifications/read-all').then((r) => r.data),
+};
+
+// ── User API ────────────────────────────────────────────────────
+export const userAPI = {
+    searchUser: (email: string) => api.get(`/users/search?email=${encodeURIComponent(email)}`).then((r) => r.data),
+    getBoardMembers: (boardId: string) => api.get(`/users/members/${boardId}`).then((r) => r.data),
 };
 
 export default api;

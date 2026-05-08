@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Dynamically use the same hostname as the frontend but port 9999
+const API_URL = `${window.location.protocol}//${window.location.hostname}:9999`;
 
 const api = axios.create({
     baseURL: API_URL,
@@ -38,5 +39,15 @@ export const teamAPI = {
     rejectRequest: (reqId: string) => api.post(`/teams/requests/${reqId}/reject`).then(res => res.data),
 };
 
-export default api;
+export const notificationAPI = {
+    getNotifications: () => api.get('/notifications/').then(res => res.data),
+    markRead: (id: string) => api.post(`/notifications/${id}/read`).then(res => res.data),
+    markAllRead: () => api.post('/notifications/read-all').then(res => res.data),
+};
 
+export const userAPI = {
+    searchUser: (email: string) => api.get(`/users/search?email=${encodeURIComponent(email)}`).then(res => res.data),
+    getBoardMembers: (boardId: string) => api.get(`/users/members/${boardId}`).then(res => res.data),
+};
+
+export default api;

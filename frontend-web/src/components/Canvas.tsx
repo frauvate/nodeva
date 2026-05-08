@@ -2,14 +2,24 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { boardAPI } from '../services/api';
 import type { ToastType } from './Toast';
+import AssigneeSelector from './AssigneeSelector';
 import './Canvas.css';
 
 /* ─── Types ─────────────────────────────────────────────────── */
+type TaskStatus = 'todo' | 'in_progress' | 'done';
+
+const STATUS_META: Record<TaskStatus, { label: string; color: string; bg: string }> = {
+    todo:        { label: 'Başlamadı',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },
+    in_progress: { label: 'Devam Ediyor', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
+    done:        { label: 'Bitti',         color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
+};
+
 interface NodeData {
     title: string;
     content: string;
     color: string;
     assignee?: string;
+    status?: TaskStatus;
 }
 
 interface Node {
@@ -31,6 +41,8 @@ interface CanvasProps {
     boardId: string;
     refreshKey?: number;
     showToast?: (message: string, type?: ToastType) => void;
+    currentUserEmail?: string;
+    onInviteUser?: (email: string) => void;
 }
 
 /* ─── Constants ──────────────────────────────────────────────── */
@@ -81,7 +93,7 @@ function findSnapTarget(
 }
 
 /* ─── Component ───────────────────────────────────────────────── */
-const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey }) => {
+const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast, currentUserEmail = '', onInviteUser }) => {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
 
@@ -341,6 +353,7 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey }) => {
                 content: 'İçerik...',
                 color: nodeType === 'task' ? 'var(--node-blue)' : 'var(--node-green)',
                 assignee: '',
+                status: nodeType === 'task' ? 'todo' : undefined,
             },
         };
         const newNodes = [...nodes, newNode];
@@ -426,27 +439,40 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey }) => {
 
     const cancelEdit = () => { setEditingId(null); setEditDraft({}); };
 
-    /* ─────────── SVG edge rendering ─────────── */
     const renderEdges = () => edges.map(edge => {
         const src = nodes.find(n => n.id === edge.source);
         const tgt = nodes.find(n => n.id === edge.target);
         if (!src || !tgt) return null;
-        const s = getHandlePos(src, edge.sourceHandle || 'right');
-        const t = getHandlePos(tgt, edge.targetHandle || 'left');
-        const cx = (s.x + t.x) / 2;
+        
+        const sHandle = edge.sourceHandle || 'right';
+        const tHandle = edge.targetHandle || 'left';
+        
+        const s = getHandlePos(src, sHandle);
+        const t = getHandlePos(tgt, tHandle);
+        
+        let d = '';
+        if (sHandle === 'bottom' || sHandle === 'top' || tHandle === 'top' || tHandle === 'bottom') {
+            const cy = (s.y + t.y) / 2;
+            d = `M ${s.x} ${s.y} C ${s.x} ${cy}, ${t.x} ${cy}, ${t.x} ${t.y}`;
+        } else {
+            const cx = (s.x + t.x) / 2;
+            d = `M ${s.x} ${s.y} C ${cx} ${s.y}, ${cx} ${t.y}, ${t.x} ${t.y}`;
+        }
+        
         return (
             <g key={edge.id}>
                 <path
-                    d={`M ${s.x} ${s.y} C ${cx} ${s.y}, ${cx} ${t.y}, ${t.x} ${t.y}`}
+                    d={d}
                     stroke="#4facfe" strokeWidth="2.5" fill="none"
                     markerEnd="url(#arrowhead)"
                 />
                 {/* clickable delete zone */}
                 <path
-                    d={`M ${s.x} ${s.y} C ${cx} ${s.y}, ${cx} ${t.y}, ${t.x} ${t.y}`}
-                    stroke="transparent" strokeWidth="12" fill="none"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => {
+                    d={d}
+                    stroke="transparent" strokeWidth="16" fill="none"
+                    style={{ cursor: 'pointer', pointerEvents: 'stroke' }}
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
                         if (window.confirm("Bu bağlantıyı silmek istediğinize emin misiniz?")) {
                             pushHistory({ nodes, edges });
                             const newEdges = edges.filter(ed => ed.id !== edge.id);
@@ -620,6 +646,26 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey }) => {
                                 👤 {node.data.assignee}
                             </div>
                         )}
+                        {isTask && node.data?.status && (() => {
+                            const sm = STATUS_META[node.data.status];
+                            return (
+                                <div style={{
+                                    marginTop: 8,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    padding: '2px 8px',
+                                    borderRadius: 20,
+                                    background: sm.bg,
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    color: sm.color,
+                                    letterSpacing: '0.3px',
+                                }}>
+                                    {sm.label}
+                                </div>
+                            );
+                        })()}
                         <div style={{
                             fontSize: '0.68rem',
                             color: 'var(--text-muted)',
@@ -846,13 +892,62 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey }) => {
                                 {isTask && (
                                     <div>
                                         <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Atanan Kişi</label>
-                                        <input
-                                            value={selNode.data.assignee || ''}
-                                            onChange={e => updateNode({ assignee: e.target.value })}
-                                            onFocus={() => pushHistory({ nodes, edges })}
-                                            onBlur={commitUpdate}
-                                            style={{ ...inputStyle, padding: '10px 14px' }}
+                                        <AssigneeSelector
+                                            boardId={boardId}
+                                            currentAssignee={selNode.data.assignee || ''}
+                                            currentUserEmail={currentUserEmail}
+                                            onSelect={(email) => {
+                                                pushHistory({ nodes, edges });
+                                                const updated = nodes.map(n =>
+                                                    n.id === selectedNodeId
+                                                        ? { ...n, data: { ...n.data, assignee: email } }
+                                                        : n
+                                                );
+                                                setNodes(updated);
+                                                saveBoard(updated, edges);
+                                            }}
+                                            onInvite={onInviteUser}
                                         />
+                                    </div>
+                                )}
+                                {isTask && (
+                                    <div>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Durum</label>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            {(Object.entries(STATUS_META) as [TaskStatus, typeof STATUS_META[TaskStatus]][]).map(([key, sm]) => {
+                                                const isActive = (selNode.data.status ?? 'todo') === key;
+                                                return (
+                                                    <button
+                                                        key={key}
+                                                        onClick={() => {
+                                                            pushHistory({ nodes, edges });
+                                                            const updated = nodes.map(n =>
+                                                                n.id === selectedNodeId ? { ...n, data: { ...n.data, status: key } } : n
+                                                            );
+                                                            setNodes(updated);
+                                                            saveBoard(updated, edges);
+                                                        }}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '7px 4px',
+                                                            borderRadius: 8,
+                                                            border: isActive ? `2px solid ${sm.color}` : '1.5px solid var(--glass-border)',
+                                                            background: isActive ? sm.bg : 'transparent',
+                                                            color: isActive ? sm.color : 'var(--text-secondary)',
+                                                            fontSize: '0.72rem',
+                                                            fontWeight: 700,
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.15s',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = sm.color; }}
+                                                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = 'var(--glass-border)'; }}
+                                                    >
+                                                        {sm.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                                 <div>

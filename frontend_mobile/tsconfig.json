@@ -4,7 +4,9 @@
     "strict": true,
     "esModuleInterop": true,
     "jsx": "react-native",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "skipLibCheck": true
   }
 }

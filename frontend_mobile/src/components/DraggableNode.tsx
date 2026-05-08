@@ -13,14 +13,19 @@ import NodeComponent from './NodeComponent';
 interface Props {
   node: NodeItem;
   onDragEnd: (id: string, position: Position) => void;
+  onDelete: (id: string) => void;
+  onEdit: (node: NodeItem) => void;
+  onPress?: (id: string) => void;
+  isConnectingSource?: boolean;
 }
 
-const DraggableNode: React.FC<Props> = ({ node, onDragEnd }) => {
+const DraggableNode: React.FC<Props> = ({ node, onDragEnd, onDelete, onEdit, onPress, isConnectingSource }) => {
   const isPressed = useSharedValue(false);
   const offset = useSharedValue({ x: node.position.x, y: node.position.y });
   const translation = useSharedValue({ x: 0, y: 0 });
 
   const panGesture = Gesture.Pan()
+    .minDistance(5)
     .onBegin(() => {
       isPressed.value = true;
     })
@@ -39,6 +44,16 @@ const DraggableNode: React.FC<Props> = ({ node, onDragEnd }) => {
       isPressed.value = false;
       runOnJS(onDragEnd)(node.id, { x: offset.value.x, y: offset.value.y });
     });
+
+  const tapGesture = Gesture.Tap()
+    .maxDuration(250)
+    .onEnd(() => {
+      if (onPress) {
+        runOnJS(onPress)(node.id);
+      }
+    });
+
+  const composedGesture = Gesture.Simultaneous(panGesture, tapGesture);
 
   // Sync internal state when node.position changes from outside (e.g. store update)
   useAnimatedReaction(
@@ -63,9 +78,16 @@ const DraggableNode: React.FC<Props> = ({ node, onDragEnd }) => {
   });
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View style={[animatedStyle, { position: 'absolute' }]}>
-        <NodeComponent node={{ ...node, position: { x: 0, y: 0 } }} />
+    <GestureDetector gesture={composedGesture}>
+      <Animated.View style={[animatedStyle, { position: 'absolute', top: 0, left: 0 }]}>
+        <NodeComponent 
+          node={{ ...node, position: { x: 0, y: 0 } }} 
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onPress={() => onPress && onPress(node.id)}
+          isConnectingSource={isConnectingSource}
+          compact={true}
+        />
       </Animated.View>
     </GestureDetector>
   );

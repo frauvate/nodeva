@@ -5,6 +5,7 @@ import Canvas from '../components/Canvas';
 import { CreateBoardModal, ConfirmModal } from '../components/Modal';
 import { ToastContainer, useToast } from '../components/Toast';
 import TeamsPanel from '../components/TeamsPanel';
+import NotificationBell from '../components/NotificationBell';
 import { boardAPI, teamAPI } from '../services/api';
 import { supabase } from '../lib/supabase';
 import '../App.css';
@@ -128,7 +129,23 @@ const Dashboard: React.FC = () => {
 
     const handleOpenTeams = () => {
         setShowTeamsPanel(true);
-        setPendingRequestCount(0); // badge'i sıfırla
+        setPendingRequestCount(0);
+    };
+
+    // Kullanıcıyı panoya ekip daveti ile davet et
+    const handleInviteUser = async (email: string) => {
+        // Mevcut panoya sahip ekip bulunur ve davet gönderilir
+        const activeBoard = boards.find(b => b.id === activeBoardId);
+        if (!activeBoard?.team_id) {
+            showToast('Bu özellik sadece ekip panolarında kullanılabilir.', 'info');
+            return;
+        }
+        try {
+            await teamAPI.inviteMember(activeBoard.team_id, email);
+            showToast(`${email} adresine ekip daveti gönderildi.`, 'success');
+        } catch (err: any) {
+            showToast(err?.response?.data?.detail || 'Davet gönderilemedi.', 'error');
+        }
     };
 
     return (
@@ -163,9 +180,23 @@ const Dashboard: React.FC = () => {
                             <span className="teams-fab-badge">{pendingRequestCount}</span>
                         )}
                     </button>
+                    {/* Bildirim çanı */}
+                    <div style={{ position: 'absolute', top: 16, right: 60, zIndex: 200 }}>
+                        <NotificationBell
+                            onNavigateToBoard={(boardId) => {
+                                setActiveBoardId(boardId);
+                            }}
+                        />
+                    </div>
                     {activeBoardId ? (
                         <>
-                            <Canvas boardId={activeBoardId} refreshKey={refreshKey} showToast={showToast} />
+                            <Canvas
+                                boardId={activeBoardId}
+                                refreshKey={refreshKey}
+                                showToast={showToast}
+                                currentUserEmail={userEmail}
+                                onInviteUser={handleInviteUser}
+                            />
                             <Toolbar boardId={activeBoardId} onGenerate={handleGenerate} showToast={showToast} />
                         </>
                     ) : (

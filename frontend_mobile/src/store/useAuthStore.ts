@@ -1,72 +1,111 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI, setAuthToken } from '../services/api';
+import { supabase } from '../lib/supabase';
+import { setAuthToken } from '../services/api';
 
 interface User {
-  id: string;
-  email: string;
+    id: string;
+    email: string;
 }
 
 interface AuthState {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  error: string | null;
+    user: User | null;
+    isLoading: boolean;
+    error: string | null;
+    mode: 'login' | 'register';
 
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  checkAuth: () => Promise<void>;
+    setMode: (mode: 'login' | 'register') => void;
+    login: (email: string, password: string) => Promise<boolean>;
+    register: (email: string, password: string) => Promise<boolean>;
+    logout: () => Promise<void>;
+    checkAuth: () => Promise<void>;
+    clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  isLoading: true,
-  error: null,
+    user: null,
+    isLoading: true,
+    error: null,
+    mode: 'login',
 
-  login: async (email, password) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await authAPI.login(email, password);
-      const { access_token, user } = response;
-      
-      await AsyncStorage.setItem('token', access_token);
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      
-      setAuthToken(access_token);
-      set({ user, token: access_token, isLoading: false });
-      return true;
-    } catch (err: any) {
-      set({ 
-        error: err.response?.data?.detail || 'Giriş yapılamadı.', 
-        isLoading: false 
-      });
-      return false;
-    }
-  },
+    setMode: (mode) => set({ mode, error: null }),
 
-  logout: async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('user');
-    setAuthToken(null);
-    set({ user: null, token: null });
-  },
+    clearError: () => set({ error: null }),
 
-  checkAuth: async () => {
-    set({ isLoading: true });
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const userStr = await AsyncStorage.getItem('user');
-      
-      if (token && userStr) {
-        const user = JSON.parse(userStr);
-        setAuthToken(token);
-        set({ user, token, isLoading: false });
-      } else {
-        set({ isLoading: false });
-      }
-    } catch (err) {
-      set({ isLoading: false });
-    }
-  },
+    login: async (email, password) => {
+        set({ isLoading: true, error: null });
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            const session = data.session;
+            if (session) {
+                setAuthToken(session.access_token);
+                set({
+                    user: { id: data.user!.id, email: data.user!.email! },
+                    isLoading: false,
+                });
+                return true;
+            }
+            throw new Error('Oturum alınamadı.');
+        } catch (err: any) {
+            const msg =
+                err.message?.includes('Invalid login') ? 'E-posta veya şifre hatalı.' :
+                err.message?.includes('Email not confirmed') ? 'E-postanızı doğrulamanız gerekiyor.' :
+                err.message || 'Giriş yapılamadı.';
+            set({ error: msg, isLoading: false });
+            return false;
+        }
+    },
+
+    register: async (email, password) => {
+        set({ isLoading: true, error: null });
+        try {
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) throw error;
+            if (data.user && !data.session) {
+                // E-posta doğrulaması gerekiyor
+                set({ isLoading: false, error: '✉️ Doğrulama e-postası gönderildi. Gelen kutunuzu kontrol edin.' });
+                return false;
+            }
+            if (data.session) {
+                setAuthToken(data.session.access_token);
+                set({
+                    user: { id: data.user!.id, email: data.user!.email! },
+                    isLoading: false,
+                });
+                return true;
+            }
+            throw new Error('Kayıt tamamlanamadı.');
+        } catch (err: any) {
+            const msg =
+                err.message?.includes('already registered') ? 'Bu e-posta zaten kayıtlı.' :
+                err.message?.includes('Password should be') ? 'Şifre en az 6 karakter olmalı.' :
+                err.message || 'Kayıt oluşturulamadı.';
+            set({ error: msg, isLoading: false });
+            return false;
+        }
+    },
+
+    logout: async () => {
+        await supabase.auth.signOut();
+        setAuthToken(null);
+        set({ user: null });
+    },
+
+    checkAuth: async () => {
+        set({ isLoading: true });
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                setAuthToken(session.access_token);
+                set({
+                    user: { id: session.user.id, email: session.user.email! },
+                    isLoading: false,
+                });
+            } else {
+                set({ isLoading: false });
+            }
+        } catch {
+            set({ isLoading: false });
+        }
+    },
 }));

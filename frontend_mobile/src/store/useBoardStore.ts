@@ -13,7 +13,10 @@ interface BoardState {
   createBoard: (title: string) => Promise<Board | null>;
   addNode: (node: NodeItem) => void;
   deleteNode: (nodeId: string) => void;
+  updateNode: (nodeId: string, data: Partial<NodeItem['data']>) => void;
   updateNodePosition: (nodeId: string, position: Position) => void;
+  addEdge: (edge: EdgeItem) => void;
+  deleteEdge: (edgeId: string) => void;
   saveBoard: () => Promise<void>;
 }
 
@@ -74,6 +77,15 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set({ activeBoard: { ...activeBoard, nodes: newNodes } });
   },
 
+  updateNode: (nodeId: string, data: Partial<NodeItem['data']>) => {
+    const { activeBoard } = get();
+    if (!activeBoard) return;
+    const newNodes = activeBoard.nodes.map((node) =>
+      node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+    );
+    set({ activeBoard: { ...activeBoard, nodes: newNodes } });
+  },
+
   updateNodePosition: (nodeId: string, position: Position) => {
     const { activeBoard } = get();
     if (!activeBoard) return;
@@ -83,6 +95,19 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     );
 
     set({ activeBoard: { ...activeBoard, nodes: newNodes } });
+  },
+
+  addEdge: (edge: EdgeItem) => {
+    const { activeBoard } = get();
+    if (!activeBoard) return;
+    set({ activeBoard: { ...activeBoard, edges: [...(activeBoard.edges || []), edge] } });
+  },
+
+  deleteEdge: (edgeId: string) => {
+    const { activeBoard } = get();
+    if (!activeBoard) return;
+    const newEdges = (activeBoard.edges || []).filter(e => e.id !== edgeId);
+    set({ activeBoard: { ...activeBoard, edges: newEdges } });
   },
 
   saveBoard: async () => {

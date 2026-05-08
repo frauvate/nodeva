@@ -1,8 +1,11 @@
+export type TaskStatus = 'todo' | 'in_progress' | 'done';
+
 export interface NodeData {
   title: string;
   content: string;
   color: string;
   assignee?: string;
+  status?: TaskStatus;
 }
 
 export interface Position {
@@ -29,6 +32,7 @@ export interface Board {
   id: string;
   user_id: string;
   title: string;
+  team_id?: string;
   nodes: NodeItem[];
   edges: EdgeItem[];
   created_at?: string;
