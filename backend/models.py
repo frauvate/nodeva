@@ -1,23 +1,5 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Dict, Any
-
-class Edge(BaseModel):
-    id: str
-    source: str = ""
-    target: str = ""
-    sourceHandle: Optional[str] = None
-    targetHandle: Optional[str] = None
-
-    @model_validator(mode='before')
-    @classmethod
-    def handle_legacy_fields(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            # Mapping: from -> source, to -> target
-            if "from" in data and not data.get("source"):
-                data["source"] = data["from"]
-            if "to" in data and not data.get("target"):
-                data["target"] = data["to"]
-        return data
 from datetime import datetime
 from bson import ObjectId
 
@@ -36,15 +18,41 @@ class NodeData(BaseModel):
 class Node(BaseModel):
     id: str
     type: str = "task"  # e.g. task, note, ai_output
-    position: Position
-    data: NodeData
+    position: Optional[Position] = Field(default_factory=lambda: Position(x=0, y=0))
+    data: Optional[NodeData] = Field(default_factory=NodeData)
+
+    @model_validator(mode='before')
+    @classmethod
+    def handle_legacy_node(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # Mapping: label -> data.title
+            if "label" in data and not data.get("data"):
+                data["data"] = {"title": data["label"]}
+            if not data.get("position"):
+                data["position"] = {"x": 0, "y": 0}
+            if not data.get("data"):
+                data["data"] = {}
+        return data
 
 class Edge(BaseModel):
-    id: str
-    source: str
-    target: str
+    id: Optional[str] = ""
+    source: str = ""
+    target: str = ""
     sourceHandle: Optional[str] = None
     targetHandle: Optional[str] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def handle_legacy_edge(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # Mapping: from -> source, to -> target
+            if "from" in data and not data.get("source"):
+                data["source"] = data["from"]
+            if "to" in data and not data.get("target"):
+                data["target"] = data["to"]
+            if not data.get("id"):
+                data["id"] = f"e-{data.get('source')}-{data.get('target')}"
+        return data
 
 class Notification(BaseModel):
     id: str = ""

@@ -47,7 +47,17 @@ def get_boards(user: dict = Depends(get_current_user)):
     user_email = user.get("email")
     
     my_team_ids = get_user_team_ids(user_id, user_email)
-    query = {"$or": [{"user_id": user_id}]}
+    
+    # 1. Kullanıcının kendi panoları
+    # 2. Üyesi/sahibi olduğu ekip panoları
+    # 3. Kendisine görev atanmış olan panolar
+    query = {
+        "$or": [
+            {"user_id": user_id},
+            {"nodes.data.assignee": user_email}
+        ]
+    }
+    
     if my_team_ids:
         query["$or"].append({"team_id": {"$in": my_team_ids}})
         

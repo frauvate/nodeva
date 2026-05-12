@@ -9,6 +9,7 @@ interface SidebarProps {
     onCreateBoard: () => void;
     onDeleteBoard: (id: string, title: string) => void;
     userEmail: string;
+    userId: string;
     theme: 'light' | 'dark';
     onToggleTheme: () => void;
 }
@@ -20,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     onCreateBoard,
     onDeleteBoard,
     userEmail,
+    userId,
     theme,
     onToggleTheme,
 }) => {
@@ -30,6 +32,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
 
     const avatarLetter = userEmail ? userEmail[0].toUpperCase() : '?';
+
+    // Kişisel: Kullanıcının kendi oluşturduğu ve bir ekibe atanmamış panolar
+    const personalBoards = boards.filter(b => b.user_id === userId && !b.team_id);
+    
+    // Ekip/Ortak: Bir ekibe atanmış panolar VEYA başkası tarafından oluşturulup kullanıcıya paylaşılan (görev atanan) panolar
+    const teamBoards = boards.filter(b => b.team_id || b.user_id !== userId);
 
     return (
         <div className={`sidebar glass-panel ${isOpen ? 'open' : 'closed'}`}>
@@ -57,12 +65,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                             >+</button>
                         </div>
                         <ul className="board-list">
-                            {boards.filter(b => !b.team_id).length === 0 && (
+                            {personalBoards.length === 0 && (
                                 <li style={{ color: '#888', fontSize: '0.85rem', padding: '4px 0' }}>
                                     Henüz kişisel pano yok
                                 </li>
                             )}
-                            {boards.filter(b => !b.team_id).map(board => (
+                            {personalBoards.map(board => (
                                 <li
                                     key={board.id}
                                     className={board.id === activeBoardId ? 'active' : ''}
@@ -85,12 +93,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <h3 className="nav-title" style={{ margin: 0 }}>Ekip Panoları</h3>
                         </div>
                         <ul className="board-list">
-                            {boards.filter(b => b.team_id).length === 0 && (
+                            {teamBoards.length === 0 && (
                                 <li style={{ color: '#888', fontSize: '0.85rem', padding: '4px 0' }}>
                                     Henüz ortak pano yok
                                 </li>
                             )}
-                            {boards.filter(b => b.team_id).map(board => (
+                            {teamBoards.map(board => (
                                 <li
                                     key={board.id}
                                     className={board.id === activeBoardId ? 'active' : ''}
@@ -98,13 +106,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                 >
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={board.title}>
-                                        🤝 {board.title}
+                                        {board.team_id ? '🤝' : '👤'} {board.title}
                                     </span>
-                                    <button
-                                        title="Panoyu sil"
-                                        onClick={(e) => { e.stopPropagation(); onDeleteBoard(board.id, board.title); }}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d32f2f', fontSize: '1rem', marginLeft: 6, flexShrink: 0 }}
-                                    >×</button>
+                                    {board.user_id === userId && (
+                                        <button
+                                            title="Panoyu sil"
+                                            onClick={(e) => { e.stopPropagation(); onDeleteBoard(board.id, board.title); }}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d32f2f', fontSize: '1rem', marginLeft: 6, flexShrink: 0 }}
+                                        >×</button>
+                                    )}
                                 </li>
                             ))}
                         </ul>

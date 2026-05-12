@@ -11,8 +11,8 @@ app = FastAPI(title="Dijital İş Akışı Yöneticisi API")
 # Configure CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False, # '*' ile credentials True olamaz, False yaparak çakışmayı önleyelim
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "*"],
+    allow_credentials=True, # allow_origins specific ise True olabilir
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -28,7 +28,8 @@ def health_check():
 # ── Log Middleware ───────────────────────────────────────────────────
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(f"[ACCESS] {request.method} {request.url.path}")
+    print(f"\n[ACCESS] {request.method} {request.url.path}")
+    print(f"[HEADERS] {dict(request.headers)}")
     response = await call_next(request)
     print(f"[RESPONSE] {response.status_code}")
     return response

@@ -158,6 +158,7 @@ const Dashboard: React.FC = () => {
                     onCreateBoard={() => setShowCreateModal(true)}
                     onDeleteBoard={(id, title) => setDeleteTarget({ id, title })}
                     userEmail={userEmail}
+                    userId={userId}
                     theme={theme}
                     onToggleTheme={toggleTheme}
                 />

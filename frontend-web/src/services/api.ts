@@ -2,7 +2,7 @@ import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
 // Dynamically use the same hostname as the frontend but port 9999
-const API_URL = `${window.location.protocol}//${window.location.hostname}:9999`;
+const API_URL = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:8001`;
 
 const api = axios.create({
     baseURL: API_URL,

@@ -12,18 +12,24 @@ security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
+    print(f"[AUTH] Verifying token (length: {len(token) if token else 0})")
+    
     # Mock token validation
     if token == "mock-jwt-token-123":
         return {"id": "dev-user-id", "email": "test@test.com"}
     
     if not supabase:
+        print("[AUTH] Error: Supabase client not initialized")
         raise HTTPException(status_code=401, detail="Supabase not configured")
         
     try:
         user = supabase.auth.get_user(token)
         if not user or not user.user:
+            print("[AUTH] Error: Invalid user response from Supabase")
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
         u = user.user
+        print(f"[AUTH] Success: {u.email}")
         return {"id": u.id, "email": u.email}
     except Exception as e:
+        print(f"[AUTH] Exception during verification: {str(e)}")
         raise HTTPException(status_code=401, detail=str(e))
