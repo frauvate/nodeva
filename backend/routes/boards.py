@@ -4,6 +4,7 @@ from database import boards_collection, teams_collection, notifications_collecti
 from models import Board, BoardCreate, Node, Edge
 from auth import get_current_user
 from services.ai import generate_workflow_from_prompt, rate_limiter
+from services.templates import get_template_data
 from bson import ObjectId
 from datetime import datetime
 
@@ -75,12 +76,15 @@ def create_board(board_in: BoardCreate, user: dict = Depends(get_current_user)):
         if team.get("owner_id") != user_id:
             raise HTTPException(status_code=403, detail="Yalnızca ekip sahibi yeni pano oluşturabilir")
             
+    nodes, edges = get_template_data(board_in.template or "basic")
+
     new_board = {
         "user_id": user_id,
         "team_id": board_in.team_id,
         "title": board_in.title,
-        "nodes": [],
-        "edges": [],
+        "template": board_in.template or "basic",
+        "nodes": nodes,
+        "edges": edges,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     }

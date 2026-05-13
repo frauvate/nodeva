@@ -6,9 +6,10 @@ interface ModalProps {
     title: string;
     onClose: () => void;
     children: React.ReactNode;
+    className?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
+export const Modal: React.FC<ModalProps> = ({ title, onClose, children, className = '' }) => {
     // Close on Escape
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -18,7 +19,7 @@ export const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
-            <div className="modal-card glass-panel" onClick={e => e.stopPropagation()}>
+            <div className={`modal-card glass-panel ${className}`} onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3 className="modal-title">{title}</h3>
                     <button className="modal-close-btn" onClick={onClose}>×</button>
@@ -31,14 +32,43 @@ export const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
 
 /* ── Create Board Modal ────────────────────────────────────────── */
 interface CreateBoardModalProps {
-    onConfirm: (title: string, teamId?: string) => void;
+    onConfirm: (title: string, teamId?: string, template?: string) => void;
     onClose: () => void;
     ownedTeams?: { id: string; name: string }[];
 }
 
+const TEMPLATES = [
+    {
+        id: 'basic',
+        title: 'Temel İş Akışı',
+        desc: 'Standart dikdörtgen görev ve not panosu.',
+        preview: (
+            <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ width: 40, height: 30, background: 'var(--node-blue)', borderRadius: 4, border: '1px solid var(--glass-border-subtle)' }} />
+                <div style={{ width: 40, height: 30, background: 'var(--node-green)', borderRadius: 4, border: '1px solid var(--glass-border-subtle)' }} />
+            </div>
+        )
+    },
+    {
+        id: 'flowchart',
+        title: 'Akış Şeması (Flowchart)',
+        desc: 'Kapsül, elmas ve dikdörtgen şekillerle karar akışları.',
+        preview: (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ width: 30, height: 20, background: 'var(--node-blue)', borderRadius: 20, border: '1px solid var(--glass-border-subtle)' }} />
+                <div style={{ width: 12, height: 2, background: 'var(--text-muted)' }} />
+                <div style={{ width: 20, height: 20, background: 'var(--node-purple)', transform: 'rotate(45deg)', border: '1px solid var(--glass-border-subtle)' }} />
+                <div style={{ width: 12, height: 2, background: 'var(--text-muted)' }} />
+                <div style={{ width: 30, height: 20, background: 'var(--node-pink)', borderRadius: 4, border: '1px solid var(--glass-border-subtle)' }} />
+            </div>
+        )
+    }
+];
+
 export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, onClose, ownedTeams = [] }) => {
     const [value, setValue] = useState('');
     const [teamId, setTeamId] = useState<string>('');
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('basic');
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => { inputRef.current?.focus(); }, []);
@@ -46,39 +76,57 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, o
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (value.trim()) { 
-            onConfirm(value.trim(), teamId || undefined); 
+            onConfirm(value.trim(), teamId || undefined, selectedTemplate); 
             onClose(); 
         }
     };
 
     return (
-        <Modal title="Yeni Pano Oluştur" onClose={onClose}>
+        <Modal title="Yeni Pano Oluştur" onClose={onClose} className="modal-card-large">
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    placeholder="Pano adı..."
-                    value={value}
-                    onChange={e => setValue(e.target.value)}
-                    className="modal-input"
-                    maxLength={60}
-                />
-                
-                {ownedTeams.length > 0 && (
-                    <select 
-                        value={teamId} 
-                        onChange={e => setTeamId(e.target.value)}
+                <div className="template-grid">
+                    {TEMPLATES.map(t => (
+                        <div 
+                            key={t.id} 
+                            className={`template-card ${selectedTemplate === t.id ? 'selected' : ''}`}
+                            onClick={() => setSelectedTemplate(t.id)}
+                        >
+                            <div className="template-preview">
+                                {t.preview}
+                            </div>
+                            <div className="template-title">{t.title}</div>
+                            <div className="template-desc">{t.desc}</div>
+                        </div>
+                    ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 14, flexDirection: 'column' }}>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        placeholder="Pano adı..."
+                        value={value}
+                        onChange={e => setValue(e.target.value)}
                         className="modal-input"
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <option value="">Kişisel Pano</option>
-                        {ownedTeams.map(t => (
-                            <option key={t.id} value={t.id}>{t.name} Ekibi</option>
-                        ))}
-                    </select>
-                )}
+                        maxLength={60}
+                    />
+                    
+                    {ownedTeams.length > 0 && (
+                        <select 
+                            value={teamId} 
+                            onChange={e => setTeamId(e.target.value)}
+                            className="modal-input"
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <option value="">Kişisel Pano</option>
+                            {ownedTeams.map(t => (
+                                <option key={t.id} value={t.id}>{t.name} Ekibi</option>
+                            ))}
+                        </select>
+                    )}
+                </div>
                 
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: '10px' }}>
                     <button type="button" className="modal-btn-secondary" onClick={onClose}>İptal</button>
                     <button type="submit" className="modal-btn-primary" disabled={!value.trim()}>Oluştur</button>
                 </div>

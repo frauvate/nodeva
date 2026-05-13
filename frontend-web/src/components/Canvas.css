@@ -77,3 +77,62 @@
     color: var(--text-secondary);
     white-space: pre-wrap;
 }
+
+/* ── Flowchart Shapes ─────────────────────────────────── */
+.canvas-node-capsule {
+    border-radius: 65px;
+    align-items: center;
+    justify-content: center;
+}
+
+.canvas-node-capsule .node-header {
+    display: none !important;
+}
+
+.canvas-node-capsule .node-inner-content {
+    justify-content: center;
+}
+
+.canvas-node-diamond-wrapper, 
+.canvas-node-parallelogram-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0;
+}
+
+.canvas-node-diamond-wrapper .shape-bg {
+    transform: rotate(45deg);
+    border-radius: 12px;
+}
+
+.canvas-node-diamond-wrapper .node-inner-content {
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+
+.canvas-node-diamond-wrapper .node-header {
+    display: none !important;
+}
+
+.canvas-node-diamond-wrapper .conn-handle-top { top: -8px; }
+.canvas-node-diamond-wrapper .conn-handle-bottom { top: calc(100% - 6px); }
+.canvas-node-diamond-wrapper .conn-handle-left { left: -8px; }
+.canvas-node-diamond-wrapper .conn-handle-right { left: calc(100% - 6px); }
+
+/* ── Parallelogram Shape (Data I/O) ──────────────────────── */
+.canvas-node-parallelogram-wrapper .shape-bg {
+    transform: skewX(-15deg);
+    border-radius: 8px;
+}
+
+.canvas-node-parallelogram-wrapper .node-inner-content {
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+}
+
+.canvas-node-parallelogram-wrapper .node-header {
+    display: none !important;
+}

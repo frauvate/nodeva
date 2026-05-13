@@ -13,6 +13,7 @@ import '../App.css';
 const Dashboard: React.FC = () => {
     const [boards, setBoards] = useState<any[]>([]);
     const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
+    const [activeBoardTemplate, setActiveBoardTemplate] = useState<string>('basic');
     const [refreshKey, setRefreshKey] = useState(0);
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState('');
@@ -65,6 +66,21 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => { fetchBoards(); }, [refreshKey]);
 
+    // Fetch full board data when active board changes to get template
+    useEffect(() => {
+        if (!activeBoardId) return;
+        boardAPI.getBoard(activeBoardId).then((board: any) => {
+            // If template is saved use it; otherwise detect from node types (legacy boards)
+            if (board.template && board.template !== 'basic') {
+                setActiveBoardTemplate(board.template);
+            } else {
+                const FLOW_TYPES = ['flow_start', 'flow_end', 'flow_process', 'flow_decision', 'flow_data'];
+                const hasFlowNodes = (board.nodes || []).some((n: any) => FLOW_TYPES.includes(n.type));
+                setActiveBoardTemplate(hasFlowNodes ? 'flowchart' : (board.template || 'basic'));
+            }
+        }).catch(() => setActiveBoardTemplate('basic'));
+    }, [activeBoardId]);
+
     // Poll pending team requests every 30 seconds
     const fetchPendingRequests = async () => {
         try {
@@ -81,11 +97,12 @@ const Dashboard: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleCreateBoard = async (title: string, teamId?: string) => {
+    const handleCreateBoard = async (title: string, teamId?: string, template?: string) => {
         try {
-            const newBoard = await boardAPI.createBoard(title, teamId);
+            const newBoard = await boardAPI.createBoard(title, teamId, template);
             setBoards(prev => [...prev, newBoard]);
             setActiveBoardId(newBoard.id);
+            setActiveBoardTemplate(newBoard.template || template || 'basic');
             showToast(`"${title}" panosu oluşturuldu.`, 'success');
         } catch (error) {
             showToast('Pano oluşturulamadı. Lütfen tekrar deneyin.', 'error');
@@ -198,7 +215,12 @@ const Dashboard: React.FC = () => {
                                 currentUserEmail={userEmail}
                                 onInviteUser={handleInviteUser}
                             />
-                            <Toolbar boardId={activeBoardId} onGenerate={handleGenerate} showToast={showToast} />
+                            <Toolbar 
+                                boardId={activeBoardId} 
+                                boardTemplate={activeBoardTemplate}
+                                onGenerate={handleGenerate} 
+                                showToast={showToast} 
+                            />
                         </>
                     ) : (
                         <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#666' }}>

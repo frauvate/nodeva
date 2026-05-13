@@ -19,7 +19,7 @@ api.interceptors.request.use(async (config) => {
 export const boardAPI = {
     getBoards: () => api.get('/boards/').then(res => res.data),
     getBoard: (id: string) => api.get(`/boards/${id}`).then(res => res.data),
-    createBoard: (title: string, team_id?: string) => api.post('/boards/', { title, team_id }).then(res => res.data),
+    createBoard: (title: string, team_id?: string, template?: string) => api.post('/boards/', { title, team_id, template }).then(res => res.data),
     updateBoard: (id: string, data: any) => api.put(`/boards/${id}`, data).then(res => res.data),
     deleteBoard: (id: string) => api.delete(`/boards/${id}`).then(res => res.data),
     generateAIWorkflow: (id: string, prompt: string) =>

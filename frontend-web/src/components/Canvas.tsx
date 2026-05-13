@@ -344,14 +344,24 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast, current
         pushHistory({ nodes, edges });
         
         const coords = toCanvasCoords(e.clientX, e.clientY);
+        let initialTitle = 'Yeni Not';
+        let initialColor = 'var(--node-green)';
+        
+        if (nodeType === 'task') { initialTitle = 'Yeni Görev'; initialColor = 'var(--node-blue)'; }
+        else if (nodeType === 'flow_start') { initialTitle = 'Başlangıç'; initialColor = 'var(--node-blue)'; }
+        else if (nodeType === 'flow_end') { initialTitle = 'Bitiş'; initialColor = 'var(--node-blue)'; }
+        else if (nodeType === 'flow_process') { initialTitle = 'İşlem'; initialColor = 'var(--node-pink)'; }
+        else if (nodeType === 'flow_decision') { initialTitle = 'Karar'; initialColor = 'var(--node-purple)'; }
+        else if (nodeType === 'flow_data') { initialTitle = 'Veri'; initialColor = 'var(--node-yellow)'; }
+
         const newNode: Node = {
             id: uuidv4(),
             type: nodeType,
             position: { x: coords.x, y: coords.y },
             data: {
-                title: nodeType === 'task' ? 'Yeni Görev' : 'Yeni Not',
-                content: 'İçerik...',
-                color: nodeType === 'task' ? 'var(--node-blue)' : 'var(--node-green)',
+                title: initialTitle,
+                content: nodeType.startsWith('flow_') ? '' : 'İçerik...',
+                color: initialColor,
                 assignee: '',
                 status: nodeType === 'task' ? 'todo' : undefined,
             },
@@ -505,7 +515,21 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast, current
     const renderNode = (node: Node) => {
         const isEditing = editingId === node.id;
         const isTask = node.type === 'task';
-        const typeLabel = isTask ? '📋 Görev' : '📝 Not';
+        const isFlowStart = node.type === 'flow_start';
+        const isFlowEnd = node.type === 'flow_end';
+        const isFlowProcess = node.type === 'flow_process';
+        const isFlowDecision = node.type === 'flow_decision';
+        const isFlowData = node.type === 'flow_data';
+        const isFlowchart = isFlowStart || isFlowEnd || isFlowProcess || isFlowDecision || isFlowData;
+
+        let typeLabel = '📝 Not';
+        if (isTask) typeLabel = '📋 Görev';
+        else if (isFlowStart) typeLabel = '🏁 Başlangıç';
+        else if (isFlowEnd) typeLabel = '🛑 Bitiş';
+        else if (isFlowProcess) typeLabel = '⚙️ İşlem';
+        else if (isFlowDecision) typeLabel = '❓ Karar';
+        else if (isFlowData) typeLabel = '📊 Veri';
+
         const typeColor = isTask ? 'var(--node-text-blue)' : 'var(--node-text-green)';
 
         // Renk normalizasyonu: eski hex değerlerini CSS değişkenlerine çevir
@@ -521,31 +545,69 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast, current
         };
         const bgColor = normalizeColor(node.data?.color || '');
 
+        let shapeClass = '';
+        let shapeBgStyle: React.CSSProperties = { background: bgColor };
+        let nodeWidth = NODE_W;
+        let nodeMinHeight = NODE_H;
+
+        if (isFlowStart || isFlowEnd) {
+            shapeClass = ' canvas-node-capsule';
+        } else if (isFlowDecision) {
+            shapeClass = ' canvas-node-diamond-wrapper';
+            nodeWidth = 140;
+            nodeMinHeight = 140;
+        } else if (isFlowData) {
+            shapeClass = ' canvas-node-parallelogram-wrapper';
+            nodeWidth = 160;
+        }
+
+        let transformStr = `translate(${node.position?.x || 0}px, ${node.position?.y || 0}px)`;
+
         return (
             <div
                 key={node.id}
-                className="canvas-node glass-panel"
+                className={`canvas-node glass-panel${shapeClass}`}
                 style={{
-                    transform: `translate(${node.position?.x || 0}px, ${node.position?.y || 0}px)`,
-                    backgroundColor: bgColor,
+                    transform: transformStr,
+                    backgroundColor: (isFlowDecision || isFlowData) ? 'transparent' : bgColor,
+                    border: (isFlowDecision || isFlowData) ? 'none' : undefined,
+                    boxShadow: (isFlowDecision || isFlowData) ? 'none' : undefined,
                     zIndex: dragInfo?.id === node.id ? 10 : 1,
-                    width: NODE_W,
-                    minHeight: NODE_H,
+                    width: nodeWidth,
+                    minHeight: nodeMinHeight,
                     boxSizing: 'border-box',
                     cursor: connecting ? 'crosshair' : (dragInfo?.id === node.id ? 'grabbing' : 'grab'),
                     userSelect: 'none',
-                    border: selectedNodeId === node.id
-                        ? '2px solid var(--accent-primary)'
-                        : '1px solid var(--glass-border)',
-                    boxShadow: selectedNodeId === node.id
-                        ? '0 0 0 3px var(--accent-gradient-soft), var(--glass-shadow-node)'
-                        : 'var(--glass-shadow-node)',
+                    ...(isFlowDecision || isFlowData ? {} : {
+                        border: selectedNodeId === node.id
+                            ? '2px solid var(--accent-primary)'
+                            : '1px solid var(--glass-border)',
+                        boxShadow: selectedNodeId === node.id
+                            ? '0 0 0 3px var(--accent-gradient-soft), var(--glass-shadow-node)'
+                            : 'var(--glass-shadow-node)',
+                    })
                 }}
                 onPointerDown={(e) => handlePointerDown(e, node.id)}
                 onDoubleClick={(e) => startEdit(e, node)}
             >
+                {(isFlowDecision || isFlowData) && (
+                    <div className="shape-bg" style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: bgColor,
+                        zIndex: -1,
+                        border: selectedNodeId === node.id
+                            ? '2px solid var(--accent-primary)'
+                            : '1px solid var(--glass-border)',
+                        boxShadow: selectedNodeId === node.id
+                            ? '0 0 0 3px var(--accent-gradient-soft), var(--glass-shadow-node)'
+                            : 'var(--glass-shadow-node)',
+                    }} />
+                )}
+                
+                <div className="node-inner-content" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {/* ── Header ── */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div className="node-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <span style={{
                         fontSize: '0.7rem',
                         fontWeight: 700,
@@ -619,21 +681,24 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast, current
                     <div>
                         <div className="node-title" style={{
                             fontWeight: 600,
-                            marginBottom: 6,
-                            fontSize: '0.95rem',
+                            marginBottom: isFlowchart ? 0 : 6,
+                            fontSize: isFlowchart ? '1.05rem' : '0.95rem',
+                            textAlign: isFlowchart ? 'center' : 'left',
                             color: 'var(--text-primary)',
                             lineHeight: 1.35,
                         }}>
                             {node.data?.title || '(Başlık yok)'}
                         </div>
-                        <div className="node-content" style={{
-                            fontSize: '0.82rem',
-                            color: 'var(--text-secondary)',
-                            whiteSpace: 'pre-wrap',
-                            lineHeight: 1.5,
-                        }}>
-                            {node.data?.content || ''}
-                        </div>
+                        {!isFlowchart && (
+                            <div className="node-content" style={{
+                                fontSize: '0.82rem',
+                                color: 'var(--text-secondary)',
+                                whiteSpace: 'pre-wrap',
+                                lineHeight: 1.5,
+                            }}>
+                                {node.data?.content || ''}
+                            </div>
+                        )}
                         {isTask && node.data?.assignee && (
                             <div style={{
                                 marginTop: 8,
@@ -666,14 +731,17 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast, current
                                 </div>
                             );
                         })()}
-                        <div style={{
-                            fontSize: '0.68rem',
-                            color: 'var(--text-muted)',
-                            marginTop: 8,
-                            opacity: 0.7,
-                        }}>Düzenlemek için çift tıkla</div>
+                        {!isFlowchart && (
+                            <div style={{
+                                fontSize: '0.68rem',
+                                color: 'var(--text-muted)',
+                                marginTop: 8,
+                                opacity: 0.7,
+                            }}>Düzenlemek için çift tıkla</div>
+                        )}
                     </div>
                 )}
+                </div>
 
                 {/* ── Connection handles ── */}
                 {!isEditing && Object.entries(HANDLE_OFFSETS).map(([side, off]) => {

@@ -85,12 +85,14 @@ class TeamRequest(BaseModel):
 class BoardCreate(BaseModel):
     title: str
     team_id: Optional[str] = None
+    template: Optional[str] = "basic"
 
 class Board(BaseModel):
     id: str
     user_id: str
     team_id: Optional[str] = None
     title: str
+    template: str = "basic"
     nodes: List[Node] = []
     edges: List[Edge] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
