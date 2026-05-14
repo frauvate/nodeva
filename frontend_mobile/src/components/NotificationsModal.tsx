@@ -8,9 +8,11 @@ import {
     FlatList,
     ActivityIndicator,
     Pressable,
+    Alert,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { notificationAPI } from '../services/api';
+import { Feather } from '@expo/vector-icons';
 
 interface Notification {
     id: string;
@@ -50,11 +52,31 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ visible, onClos
     const handleRead = async (notif: Notification) => {
         if (!notif.read) {
             await notificationAPI.markRead(notif.id).catch(() => {});
+            // Update local state to show as read immediately
+            setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
         }
         if (notif.board_id) {
             onNavigateToBoard(notif.board_id);
             onClose();
         }
+    };
+
+    const handleDelete = (notifId: string) => {
+        Alert.alert('Bildirimi Sil', 'Bu bildirimi silmek istediğinize emin misiniz?', [
+            { text: 'Vazgeç', style: 'cancel' },
+            { 
+                text: 'Sil', 
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await notificationAPI.deleteNotification(notifId);
+                        setNotifications(prev => prev.filter(n => n.id !== notifId));
+                    } catch (err) {
+                        Alert.alert('Hata', 'Bildirim silinemedi.');
+                    }
+                }
+            }
+        ]);
     };
 
     const formatTime = (iso: string) => {
@@ -68,14 +90,26 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ visible, onClos
         } catch { return ''; }
     };
 
+    const getIcon = (type: string) => {
+        switch (type) {
+            case 'task_assigned': return 'check-circle';
+            case 'board_shared': return 'share-2';
+            case 'team_invite': return 'users';
+            default: return 'bell';
+        }
+    };
+
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <Pressable style={styles.overlay} onPress={onClose} />
             <View style={[styles.container, { backgroundColor: isDark ? '#1c1c28' : '#fff', borderColor: colors.border }]}>
                 <View style={styles.header}>
-                    <Text style={[styles.title, { color: colors.textPrimary }]}>Bildirimler</Text>
-                    <TouchableOpacity onPress={onClose}>
-                        <Text style={{ color: colors.accent, fontWeight: '700' }}>Kapat</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Feather name="bell" size={20} color={colors.accent} />
+                        <Text style={[styles.title, { color: colors.textPrimary }]}>Bildirimler</Text>
+                    </View>
+                    <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                        <Feather name="x" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
                 </View>
 
@@ -85,28 +119,42 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ visible, onClos
                     <FlatList
                         data={notifications}
                         keyExtractor={item => item.id}
+                        contentContainerStyle={{ paddingBottom: 20 }}
                         ListEmptyComponent={
                             <View style={styles.empty}>
-                                <Text style={{ fontSize: 32, marginBottom: 12 }}>🔔</Text>
-                                <Text style={{ color: colors.textMuted }}>Henüz bildirim yok</Text>
+                                <View style={[styles.emptyIconCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc' }]}>
+                                    <Feather name="bell-off" size={40} color={colors.textMuted} />
+                                </View>
+                                <Text style={{ color: colors.textMuted, fontSize: 15, fontWeight: '500' }}>Henüz bildirim yok</Text>
                             </View>
                         }
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[styles.notifRow, { 
-                                    backgroundColor: item.read ? 'transparent' : (isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.05)'),
+                                    backgroundColor: item.read ? 'transparent' : (isDark ? 'rgba(99,102,241,0.08)' : 'rgba(99,102,241,0.04)'),
                                     borderBottomColor: colors.border 
                                 }]}
                                 onPress={() => handleRead(item)}
                             >
-                                <View style={styles.iconContainer}>
-                                    <Text style={{ fontSize: 20 }}>{item.type === 'task_assigned' ? '📋' : '📩'}</Text>
+                                <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }]}>
+                                    <Feather name={getIcon(item.type) as any} size={18} color={item.read ? colors.textSecondary : colors.accent} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.notifTitle, { color: colors.textPrimary }]}>{item.title}</Text>
-                                    <Text style={[styles.notifBody, { color: colors.textSecondary }]}>{item.body}</Text>
-                                    <Text style={[styles.notifTime, { color: colors.textMuted }]}>{formatTime(item.created_at)}</Text>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                                        <Text style={[styles.notifTitle, { color: colors.textPrimary }]} numberOfLines={1}>{item.title}</Text>
+                                        <Text style={[styles.notifTime, { color: colors.textMuted }]}>{formatTime(item.created_at)}</Text>
+                                    </View>
+                                    <Text style={[styles.notifBody, { color: colors.textSecondary }]} numberOfLines={2}>{item.body}</Text>
                                 </View>
+                                
+                                <TouchableOpacity 
+                                    onPress={() => handleDelete(item.id)}
+                                    style={styles.deleteBtn}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    <Feather name="trash-2" size={16} color={colors.error} style={{ opacity: 0.6 }} />
+                                </TouchableOpacity>
+
                                 {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.accent }]} />}
                             </TouchableOpacity>
                         )}
@@ -122,34 +170,65 @@ const styles = StyleSheet.create({
     container: {
         marginHorizontal: 20,
         marginTop: 100,
-        marginBottom: 40,
-        borderRadius: 20,
+        marginBottom: 80,
+        borderRadius: 24,
         borderWidth: 1,
         flex: 1,
         overflow: 'hidden',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 16,
+        padding: 20,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(0,0,0,0.05)',
     },
-    title: { fontSize: 18, fontWeight: '700' },
-    empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+    title: { fontSize: 18, fontWeight: '800', letterSpacing: -0.5 },
+    closeBtn: { padding: 4 },
+    empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
+    emptyIconCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
     notifRow: {
         flexDirection: 'row',
-        padding: 16,
+        padding: 18,
         borderBottomWidth: 1,
-        gap: 12,
-        alignItems: 'flex-start',
+        gap: 14,
+        alignItems: 'center',
     },
-    iconContainer: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center' },
-    notifTitle: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+    iconContainer: { 
+        width: 44, 
+        height: 44, 
+        borderRadius: 14, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    notifTitle: { fontSize: 14, fontWeight: '700', flex: 1, marginRight: 8 },
     notifBody: { fontSize: 13, lineHeight: 18 },
-    notifTime: { fontSize: 11, marginTop: 4 },
-    unreadDot: { width: 8, height: 8, borderRadius: 4, marginTop: 4 },
+    notifTime: { fontSize: 11, fontWeight: '500' },
+    unreadDot: { 
+        position: 'absolute',
+        top: 18,
+        right: 12,
+        width: 8, 
+        height: 8, 
+        borderRadius: 4,
+    },
+    deleteBtn: {
+        padding: 8,
+        marginLeft: 4,
+    }
 });
 
 export default NotificationsModal;

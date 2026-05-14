@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 
 // Yerel ağdaki tüm cihazların (telefon dahil) bağlanabilmesi için
 // bilgisayarın yerel IP adresi kullanılıyor.
-const BASE_URL = 'http://172.20.10.2:8000';
+const BASE_URL = 'http://192.168.1.105:8001';
 
 export { BASE_URL };
 
@@ -36,8 +36,8 @@ api.interceptors.request.use(async (config) => {
 export const boardAPI = {
     getBoards: () => api.get('/boards/').then((r) => r.data),
     getBoard: (id: string) => api.get(`/boards/${id}`).then((r) => r.data),
-    createBoard: (title: string, team_id?: string) =>
-        api.post('/boards/', { title, team_id }).then((r) => r.data),
+    createBoard: (title: string, team_id?: string, template?: string) =>
+        api.post('/boards/', { title, team_id, template }).then((r) => r.data),
     updateBoard: (id: string, data: any) =>
         api.put(`/boards/${id}`, data).then((r) => r.data),
     deleteBoard: (id: string) => api.delete(`/boards/${id}`).then((r) => r.data),
@@ -49,6 +49,7 @@ export const boardAPI = {
 export const teamAPI = {
     getTeams: () => api.get('/teams/').then((r) => r.data),
     createTeam: (name: string) => api.post('/teams/', { name }).then((r) => r.data),
+    updateTeam: (id: string, name: string) => api.put(`/teams/${id}`, { name }).then((r) => r.data),
     deleteTeam: (teamId: string) => api.delete(`/teams/${teamId}`).then((r) => r.data),
     inviteMember: (teamId: string, email: string) =>
         api.post(`/teams/${teamId}/invite`, { email }).then((r) => r.data),
@@ -64,12 +65,15 @@ export const notificationAPI = {
     getNotifications: () => api.get('/notifications/').then((r) => r.data),
     markRead: (id: string) => api.post(`/notifications/${id}/read`).then((r) => r.data),
     markAllRead: () => api.post('/notifications/read-all').then((r) => r.data),
+    deleteNotification: (id: string) => api.delete(`/notifications/${id}`).then((r) => r.data),
 };
 
 // ── User API ────────────────────────────────────────────────────
 export const userAPI = {
     searchUser: (email: string) => api.get(`/users/search?email=${encodeURIComponent(email)}`).then((r) => r.data),
     getBoardMembers: (boardId: string) => api.get(`/users/members/${boardId}`).then((r) => r.data),
+    updateProfile: (updates: any) => api.put('/users/profile', updates).then((r) => r.data),
+    shareBoard: (boardId: string, email: string) => api.post('/users/share-board', { board_id: boardId, email }).then((r) => r.data),
 };
 
 export default api;

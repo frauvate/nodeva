@@ -53,7 +53,15 @@ const DraggableNode: React.FC<Props> = ({ node, onDragEnd, onDelete, onEdit, onP
       }
     });
 
-  const composedGesture = Gesture.Simultaneous(panGesture, tapGesture);
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(350)
+    .onEnd(() => {
+      if (onEdit) {
+        runOnJS(onEdit)(node);
+      }
+    });
+
+  const composedGesture = Gesture.Simultaneous(panGesture, Gesture.Race(tapGesture, longPressGesture));
 
   // Sync internal state when node.position changes from outside (e.g. store update)
   useAnimatedReaction(
@@ -84,7 +92,6 @@ const DraggableNode: React.FC<Props> = ({ node, onDragEnd, onDelete, onEdit, onP
           node={{ ...node, position: { x: 0, y: 0 } }} 
           onDelete={onDelete}
           onEdit={onEdit}
-          onPress={() => onPress && onPress(node.id)}
           isConnectingSource={isConnectingSource}
           compact={true}
         />

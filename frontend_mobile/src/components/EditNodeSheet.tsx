@@ -15,6 +15,7 @@ import { useTheme } from '../context/ThemeContext';
 import { NodeItem, TaskStatus } from '../types/models';
 import AssigneePicker from './AssigneePicker';
 import { teamAPI } from '../services/api';
+import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
 interface EditNodeSheetProps {
   visible: boolean;
@@ -103,9 +104,18 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
 
           {/* Başlık satırı */}
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-              {isTask ? '✅ Görevi Düzenle' : '📝 Notu Düzenle'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={[styles.typeIconBadge, { backgroundColor: `${colors.accent}15` }]}>
+                {isTask ? (
+                  <Feather name="check-square" size={20} color={colors.accent} />
+                ) : (
+                  <Feather name="file-text" size={20} color={colors.accent} />
+                )}
+              </View>
+              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+                {isTask ? 'Görevi Düzenle' : 'Notu Düzenle'}
+              </Text>
+            </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <View style={[styles.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)' }]}>
                 <Text style={[styles.closeBtnText, { color: colors.textSecondary }]}>✕</Text>
@@ -204,7 +214,10 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
                       </TouchableOpacity>
                     </>
                   ) : (
-                    <Text style={[styles.assigneePlaceholder, { color: colors.textMuted }]}>👤 Kişi seç...</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Feather name="user" size={16} color={colors.textMuted} />
+                      <Text style={[styles.assigneePlaceholder, { color: colors.textMuted }]}>Kişi seç...</Text>
+                    </View>
                   )}
                 </TouchableOpacity>
               </>
@@ -328,6 +341,13 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  typeIconBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeBtn: {
     width: 32,

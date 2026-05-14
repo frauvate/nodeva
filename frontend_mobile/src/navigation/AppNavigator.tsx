@@ -10,11 +10,12 @@ import { notificationAPI } from '../services/api';
 import NotificationsModal from '../components/NotificationsModal';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { Feather } from '@expo/vector-icons';
 
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
-  Board: { boardId: string };
+  Board: { boardId: string; template?: string };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -22,7 +23,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 /* ─── Küçük bildirim çanı ikonu ─── */
 const NotificationBellIcon: React.FC<{ onPress: () => void; count: number; colors: any }> = ({ onPress, count, colors }) => (
   <TouchableOpacity onPress={onPress} style={{ padding: 8, marginRight: 4 }} activeOpacity={0.7}>
-    <Text style={{ fontSize: 22, textAlign: 'center' }}>🔔</Text>
+    <Feather name="bell" size={22} color={colors.textPrimary} />
     {count > 0 && (
       <View style={{
         position: 'absolute', top: 4, right: 4,
@@ -102,9 +103,7 @@ export const AppNavigator = () => {
               style={{ padding: 8, marginRight: 8 }}
               activeOpacity={0.7}
             >
-              <Text style={{ fontSize: 24, textAlign: 'center' }}>
-                {isDark ? '☀️' : '🌙'}
-              </Text>
+              <Feather name={isDark ? "sun" : "moon"} size={22} color={colors.textPrimary} />
             </TouchableOpacity>
             {user && (
               <TouchableOpacity
@@ -112,7 +111,7 @@ export const AppNavigator = () => {
                 style={{ padding: 8, marginRight: 16 }}
                 activeOpacity={0.7}
               >
-                <Text style={{ fontSize: 18 }}>🚪</Text>
+                <Feather name="log-out" size={20} color={colors.textPrimary} />
               </TouchableOpacity>
             )}
           </View>

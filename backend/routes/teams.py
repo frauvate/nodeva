@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import List
-from database import teams_collection, requests_collection, boards_collection
+from database import teams_collection, requests_collection, boards_collection, notifications_collection
 from models import Team, TeamRequest
 from auth import get_current_user
 from datetime import datetime
@@ -70,6 +70,28 @@ def create_team(team_in: dict = Body(...), user: dict = Depends(get_current_user
     return serialize_doc(new_team)
 
 
+# ── PUT /teams/{team_id} ──────────────────────────────────────────────────
+@router.put("/{team_id}")
+def update_team(team_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user)):
+    user_id = user.get("id")
+    team = teams_collection.find_one({"id": team_id})
+    if not team:
+        raise HTTPException(status_code=404, detail="Ekip bulunamadı.")
+    
+    if team.get("owner_id") != user_id:
+        raise HTTPException(status_code=403, detail="Yalnızca ekip sahibi ekibi düzenleyebilir.")
+    
+    updates = {}
+    if "name" in payload:
+        updates["name"] = payload["name"]
+    
+    if not updates:
+        return serialize_doc(team)
+
+    teams_collection.update_one({"id": team_id}, {"$set": updates})
+    return {**serialize_doc(team), **updates}
+
+
 # ── DELETE /teams/{team_id} ──────────────────────────────────────────────────
 @router.delete("/{team_id}")
 def delete_team(team_id: str, user: dict = Depends(get_current_user)):
@@ -79,8 +101,11 @@ def delete_team(team_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Ekip bulunamadı.")
     if team.get("owner_id") != user_id:
         raise HTTPException(status_code=403, detail="Yalnızca ekip sahibi silebilir.")
+    # Ekibe ait tüm panoları da sil
+    boards_collection.delete_many({"team_id": team_id})
+    
     teams_collection.delete_one({"id": team_id})
-    return {"status": "success", "message": "Ekip silindi."}
+    return {"status": "success", "message": "Ekip ve ilgili tüm panolar silindi."}
 
 
 # ── DELETE /teams/{team_id}/members/{member_email} ───────────────────────────
@@ -141,6 +166,22 @@ def invite_user(team_id: str, payload: dict = Body(...), user: dict = Depends(ge
         "created_at": datetime.utcnow(),
     }
     requests_collection.insert_one(new_req)
+    
+    # ── BİLDİRİM OLUŞTUR ──
+    try:
+        notifications_collection.insert_one({
+            "recipient_email": email,
+            "type": "team_invite",
+            "title": "Ekip Daveti",
+            "body": f'"{team.get("name")}" ekibine katılmanız için davet edildiniz.',
+            "team_id": team_id,
+            "sender_email": user.get("email"),
+            "read": False,
+            "created_at": datetime.utcnow(),
+        })
+    except Exception as e:
+        print(f"[ERROR] Ekip davet bildirimi hatası: {e}")
+    # ──────────────────────
     return {"status": "success", "message": "Davet başarıyla gönderildi."}
 
 
@@ -172,6 +213,33 @@ def accept_request(req_id: str, user: dict = Depends(get_current_user)):
 
     requests_collection.update_one({"id": req_id}, {"$set": {"status": "accepted"}})
     teams_collection.update_one({"id": team_id}, {"$push": {"members": user_email}})
+    
+    # ── EKİP SAHİBİNE BİLDİRİM GÖNDER ──
+    try:
+        owner_id = team.get("owner_id")
+        # Sahibin emailini bulmamız lazım. auth.get_user_by_id gibi bir şey yoksa id ile recipient arayabiliriz ama 
+        # recipient_email kullandığımız için email lazım.
+        # Genelde owner_id olan kişinin email'ini Supabase'den çekebiliriz veya Team objesinde owner_email saklayabiliriz.
+        # Şimdilik recipient_email sistemini email bazlı kurduğumuz için email bilgisi kritik.
+        # Supabase available ise çekelim.
+        from database import supabase_client, SUPABASE_AVAILABLE
+        if SUPABASE_AVAILABLE and supabase_client:
+            resp = supabase_client.auth.admin.get_user_by_id(owner_id)
+            owner_email = resp.user.email
+            notifications_collection.insert_one({
+                "recipient_email": owner_email,
+                "type": "team_invite_accepted",
+                "title": "Davet Kabul Edildi",
+                "body": f'"{user_email}" kullanıcısı "{team.get("name")}" ekibine katıldı.',
+                "team_id": team_id,
+                "sender_email": user_email,
+                "read": False,
+                "created_at": datetime.utcnow(),
+            })
+    except Exception as e:
+        print(f"[ERROR] Davet kabul bildirimi hatası: {e}")
+    # ───────────────────────────────────
+    
     return {"status": "success"}
 
 

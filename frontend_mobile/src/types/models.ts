@@ -33,6 +33,7 @@ export interface Board {
   user_id: string;
   title: string;
   team_id?: string;
+  template?: string;
   nodes: NodeItem[];
   edges: EdgeItem[];
   created_at?: string;

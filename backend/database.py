@@ -21,7 +21,7 @@ def get_data():
     if not os.path.exists(DB_FILE):
         return {"boards": []}
     try:
-        with open(DB_FILE, "r") as f:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
             content = f.read().strip()
             if not content:
                 return {"boards": []}
@@ -38,8 +38,10 @@ class DateTimeEncoder(json.JSONEncoder):
 
 
 def save_data(data):
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, cls=DateTimeEncoder)
+    temp_file = DB_FILE + ".tmp"
+    with open(temp_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, cls=DateTimeEncoder, ensure_ascii=False, indent=2)
+    os.replace(temp_file, DB_FILE)
 
 
 class MockCollection:
@@ -63,14 +65,19 @@ class MockCollection:
                 if doc_val not in v["$in"]:
                     return False
             else:
-                if doc_val != query_val:
+                if isinstance(doc_val, list):
+                    if query_val not in doc_val:
+                        return False
+                elif doc_val != query_val:
                     return False
         return True
 
     def find(self, query=None):
         data = get_data()
         items = data.get(self.coll, [])
-        return [doc for doc in items if self._match(doc, query or {})]
+        matched = [doc for doc in items if self._match(doc, query or {})]
+        print(f"[DEBUG] MockCollection({self.coll}).find(query={query}) -> matched {len(matched)} items")
+        return matched
 
     def find_one(self, query):
         data = get_data()
@@ -121,6 +128,19 @@ class MockCollection:
         class Result: deleted_count = 0
         return Result()
 
+    def delete_many(self, query):
+        data = get_data()
+        items = data.get(self.coll, [])
+        original_len = len(items)
+        data[self.coll] = [doc for doc in items if not self._match(doc, query)]
+        deleted_count = original_len - len(data[self.coll])
+        if deleted_count > 0:
+            save_data(data)
+        class Result: pass
+        res = Result()
+        res.deleted_count = deleted_count
+        return res
+
 
 # ─── Supabase Collection (teams & requests) ──────────────────────────────────
 
@@ -160,7 +180,13 @@ class SupabaseCollection:
             req = supabase_client.table(self.table).select("*")
             if query:
                 for k, v in query.items():
-                    req = req.eq(k, v)
+                    if k == "members":
+                        # Supabase text[] array column search - explicit PG syntax
+                        req = req.filter(k, "cs", f"{{{v}}}")
+                    elif k == "_id" or k == "id":
+                         req = req.eq("id", str(v))
+                    else:
+                        req = req.eq(k, v)
             res = req.execute()
             return [self._normalize(r) for r in (res.data or [])]
         except Exception as e:
@@ -175,7 +201,9 @@ class SupabaseCollection:
         try:
             req = supabase_client.table(self.table).select("*")
             for k, v in query.items():
-                if k == "_id":
+                if k == "members":
+                    req = req.filter(k, "cs", f"{{{v}}}")
+                elif k == "_id" or k == "id":
                     req = req.eq("id", str(v))
                 else:
                     req = req.eq(k, v)
@@ -204,6 +232,7 @@ class SupabaseCollection:
                     clean[k] = v
             clean.pop("id", None)  # uuid üretimi Supabase'e bırak
 
+            print(f"[DEBUG] Supabase insert on {self.table}: {clean}")
             res = supabase_client.table(self.table).insert(clean).execute()
             if res.data:
                 row = self._normalize(res.data[0])
@@ -264,6 +293,28 @@ class SupabaseCollection:
         except Exception as e:
             print(f"[Supabase delete_one error on {self.table}]: {e}")
             return self._fallback.delete_one(query)
+
+    def delete_many(self, query: dict):
+        sb = self._sb()
+        if not sb:
+            return self._fallback.delete_many(query)
+        try:
+            req = supabase_client.table(self.table).delete()
+            for k, v in query.items():
+                if k == "members":
+                    req = req.filter(k, "cs", f"{{{v}}}")
+                elif k == "_id" or k == "id":
+                    req = req.eq("id", str(v))
+                else:
+                    req = req.eq(k, v)
+            res = req.execute()
+            class Result: pass
+            r = Result()
+            r.deleted_count = len(res.data or [])
+            return r
+        except Exception as e:
+            print(f"[Supabase delete_many error on {self.table}]: {e}")
+            return self._fallback.delete_many(query)
 
 
 # ─── Collection instances ────────────────────────────────────────────────────

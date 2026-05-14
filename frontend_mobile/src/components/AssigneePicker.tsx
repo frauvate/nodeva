@@ -11,6 +11,7 @@ import {
     Pressable,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { userAPI } from '../services/api';
@@ -153,8 +154,12 @@ const AssigneePicker: React.FC<AssigneePickerProps> = ({
                                         onPress={() => handleSelect(item.email)}
                                         activeOpacity={0.7}
                                     >
-                                        <View style={[styles.avatar, { backgroundColor: getColor(item.email) }]}>
-                                            <Text style={styles.avatarText}>{getAvatar(item.email)}</Text>
+                                        <View style={[styles.avatar, { backgroundColor: item.avatar_url ? 'transparent' : getColor(item.email) }]}>
+                                            {item.avatar_url ? (
+                                                <Image source={{ uri: item.avatar_url }} style={styles.avatarImage} />
+                                            ) : (
+                                                <Text style={styles.avatarText}>{getAvatar(item.email)}</Text>
+                                            )}
                                         </View>
                                         <View style={{ flex: 1 }}>
                                             <Text style={[styles.memberEmail, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -264,6 +269,12 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 18,
     },
     avatarText: { color: '#fff', fontWeight: '700', fontSize: 14 },
     memberEmail: { fontSize: 13, fontWeight: '600' },

@@ -57,3 +57,9 @@ def mark_all_read(user: dict = Depends(get_current_user)):
         if nid:
             notifications_collection.update_one({"id": str(nid)}, {"$set": {"read": True}})
     return {"status": "success"}
+# ── DELETE /notifications/{id} ───────────────────────────────────────────────
+@router.delete("/{notif_id}")
+def delete_notification(notif_id: str, user: dict = Depends(get_current_user)):
+    email = user.get("email")
+    notifications_collection.delete_one({"id": notif_id, "recipient_email": email})
+    return {"status": "success"}

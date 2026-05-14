@@ -1,16 +1,17 @@
 import { create } from 'zustand';
 import { Board, NodeItem, EdgeItem, Position } from '../types/models';
-import { boardAPI, BASE_URL } from '../services/api';
+import { boardAPI, userAPI, BASE_URL } from '../services/api';
 
 interface BoardState {
   boards: Board[];
   activeBoard: Board | null;
   isLoading: boolean;
   error: string | null;
+  boardMembers: any[];
 
   fetchBoards: () => Promise<void>;
   selectBoard: (id: string) => Promise<void>;
-  createBoard: (title: string) => Promise<Board | null>;
+  createBoard: (title: string, template?: string) => Promise<Board | null>;
   addNode: (node: NodeItem) => void;
   deleteNode: (nodeId: string) => void;
   updateNode: (nodeId: string, data: Partial<NodeItem['data']>) => void;
@@ -18,6 +19,14 @@ interface BoardState {
   addEdge: (edge: EdgeItem) => void;
   deleteEdge: (edgeId: string) => void;
   saveBoard: () => Promise<void>;
+  
+  deleteBoard: (id: string) => Promise<boolean>;
+  updateBoardDetails: (id: string, data: { title?: string; team_id?: string }) => Promise<void>;
+  generateAI: (boardId: string, prompt: string) => Promise<void>;
+  togglePin: (id: string) => void;
+  shareBoard: (boardId: string, email: string) => Promise<void>;
+  fetchMembers: (boardId: string) => Promise<void>;
+  getMemberAvatar: (email: string) => string | null;
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -25,6 +34,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   activeBoard: null,
   isLoading: false,
   error: null,
+  boardMembers: [],
 
   fetchBoards: async () => {
     set({ isLoading: true, error: null });
@@ -44,15 +54,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     try {
       const board = await boardAPI.getBoard(id);
       set({ activeBoard: board, isLoading: false });
+      // Fetch members too
+      get().fetchMembers(id);
     } catch (err) {
       set({ error: 'Pano detayları yüklenemedi.', isLoading: false });
     }
   },
 
-  createBoard: async (title: string) => {
+  createBoard: async (title: string, template?: string) => {
     set({ isLoading: true, error: null });
     try {
-      const newBoard = await boardAPI.createBoard(title);
+      const newBoard = await boardAPI.createBoard(title, undefined, template);
       set((state) => ({ 
         boards: [...state.boards, newBoard],
         isLoading: false 
@@ -122,5 +134,87 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     } catch (err) {
       set({ error: 'Failed to save board' });
     }
+  },
+
+  deleteBoard: async (id: string) => {
+    set({ isLoading: true });
+    try {
+      await boardAPI.deleteBoard(id);
+      set((state) => ({
+        boards: state.boards.filter((b) => b.id !== id),
+        isLoading: false,
+      }));
+      return true;
+    } catch (err) {
+      set({ error: 'Pano silinemedi.', isLoading: false });
+      return false;
+    }
+  },
+
+  updateBoardDetails: async (id: string, data: { title?: string; team_id?: string }) => {
+    set({ isLoading: true });
+    try {
+      await boardAPI.updateBoard(id, data);
+      set((state) => ({
+        boards: state.boards.map((b) => (b.id === id ? { ...b, ...data } : b)),
+        activeBoard: state.activeBoard?.id === id ? { ...state.activeBoard, ...data } : state.activeBoard,
+        isLoading: false,
+      }));
+    } catch (err) {
+      set({ error: 'Pano bilgileri güncellenemedi.', isLoading: false });
+    }
+  },
+
+  generateAI: async (boardId: string, prompt: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await boardAPI.generateAIWorkflow(boardId, prompt);
+      if (result.status === 'success') {
+        const updatedBoard = await boardAPI.getBoard(boardId);
+        set((state) => ({
+          activeBoard: updatedBoard,
+          boards: state.boards.map(b => b.id === boardId ? updatedBoard : b),
+          isLoading: false
+        }));
+      } else {
+        throw new Error('AI generation failed');
+      }
+    } catch (err: any) {
+      set({ error: 'AI ile oluşturma başarısız oldu.', isLoading: false });
+    }
+  },
+
+  togglePin: (id: string) => {
+    set((state) => ({
+      boards: state.boards.map((b) =>
+        b.id === id ? { ...b, pinned: !b.pinned } : b
+      ),
+    }));
+  },
+
+  shareBoard: async (boardId: string, email: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await userAPI.shareBoard(boardId, email);
+      const boards = await boardAPI.getBoards(); // Refresh
+      set({ boards, isLoading: false });
+      get().fetchMembers(boardId); // Refresh members
+    } catch (err) {
+      set({ error: 'Paylaşım başarısız.', isLoading: false });
+    }
+  },
+
+  fetchMembers: async (boardId: string) => {
+    try {
+      const members = await userAPI.getBoardMembers(boardId);
+      set({ boardMembers: members });
+    } catch (err) {
+      console.log('Error fetching members:', err);
+    }
+  },
+
+  getMemberAvatar: (email: string) => {
+    const member = get().boardMembers.find(m => m.email === email);
+    return member?.avatar_url || null;
   },
 }));

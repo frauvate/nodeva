@@ -46,7 +46,7 @@ class RateLimiter:
 
 rate_limiter = RateLimiter()
 
-def generate_workflow_from_prompt(prompt: str) -> list:
+def generate_workflow_from_prompt(prompt: str, template: str = "basic") -> list:
     # Anahtarı her seferinde en güncel haliyle çek ve temizle
     load_dotenv(override=True)
     key = os.getenv("GEMINI_API_KEY", "").replace('"', '').replace("'", "").strip()
@@ -61,11 +61,30 @@ def generate_workflow_from_prompt(prompt: str) -> list:
     if not allowed:
         return [{"id": "rate-limit", "type": "task", "position": {"x": 100, "y": 100}, "data": {"title": "⏳ Limit", "content": reason, "color": "#FFF9C4"}}], []
 
-    sys_prompt = """
-    Return ONLY a valid JSON object with 'nodes' and 'edges' arrays. 
-    Exactly 5 steps.
-    Structure: {"nodes": [...], "edges": [...]}
-    """
+    if template == "flowchart":
+        sys_prompt = """
+        You are an expert flowchart generator. Return ONLY a valid JSON object.
+        Structure: {"nodes": [...], "edges": [...]}
+        Available node types: 
+        - 'flow_start': Start point (one per flow)
+        - 'flow_process': Standard processing step
+        - 'flow_decision': Decision point (Diamond shape)
+        - 'flow_data': Data input/output (Parallelogram)
+        - 'flow_end': End point
+        
+        Rules:
+        1. Connect nodes with edges using 'id', 'source', and 'target'.
+        2. Assign positions (x, y) starting from (100, 100) and moving downwards/right.
+        3. Use max 8-10 nodes.
+        4. Node data should have 'title', 'content', and 'color'.
+        """
+    else:
+        sys_prompt = """
+        Return ONLY a valid JSON object with 'nodes' and 'edges' arrays.
+        Types: 'task' (with status: 'todo') or 'note'.
+        Max 6-8 items.
+        Structure: {"nodes": [...], "edges": [...]}
+        """
     
     try:
         response = client.models.generate_content(

@@ -5,6 +5,7 @@ import { setAuthToken } from '../services/api';
 interface User {
     id: string;
     email: string;
+    avatar_url?: string;
 }
 
 interface AuthState {
@@ -19,6 +20,7 @@ interface AuthState {
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     clearError: () => void;
+    updateProfile: (updates: Partial<User>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -98,7 +100,11 @@ export const useAuthStore = create<AuthState>((set) => ({
             if (session?.user) {
                 setAuthToken(session.access_token);
                 set({
-                    user: { id: session.user.id, email: session.user.email! },
+                    user: { 
+                        id: session.user.id, 
+                        email: session.user.email!,
+                        avatar_url: session.user.user_metadata?.avatar_url
+                    },
                     isLoading: false,
                 });
             } else {
@@ -107,5 +113,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         } catch {
             set({ isLoading: false });
         }
+    },
+
+    updateProfile: async (updates) => {
+        set((state) => ({
+            user: state.user ? { ...state.user, ...updates } : null
+        }));
     },
 }));

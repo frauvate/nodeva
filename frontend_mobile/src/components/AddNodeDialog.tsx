@@ -13,21 +13,43 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
+import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+
 interface AddNodeDialogProps {
   visible: boolean;
   onClose: () => void;
   onAdd: (data: { title: string; content: string; type: string; color: string }) => void;
+  boardTemplate?: string;
+  initialType?: string;
 }
 
 const ACCENT_COLORS_LIGHT = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 const ACCENT_COLORS_DARK  = ['#818cf8', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#22d3ee'];
 
-const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }) => {
+const FLOW_SHAPES = [
+  { key: 'flow_start',    icon: 'ellipse-outline', provider: 'Ionicons', label: 'Başlangıç' },
+  { key: 'flow_process',  icon: 'square-outline',  provider: 'Ionicons', label: 'İşlem' },
+  { key: 'flow_decision', icon: 'rhombus-outline', provider: 'MaterialCommunityIcons', label: 'Karar' },
+  { key: 'flow_data',     icon: 'card-outline',    provider: 'Ionicons', label: 'Veri' },
+];
+
+const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ 
+  visible, 
+  onClose, 
+  onAdd, 
+  boardTemplate = 'basic',
+  initialType
+}) => {
   const { colors, isDark } = useTheme();
   const [title, setTitle]           = useState('');
   const [content, setContent]       = useState('');
-  const [type, setType]             = useState<'note' | 'task'>('note');
+  const [type, setType]             = useState<string>(initialType || (boardTemplate === 'flowchart' ? 'flow_process' : 'note'));
   const [selectedColor, setSelectedColor] = useState('');
+
+  // Update type when initialType changes
+  React.useEffect(() => {
+    if (initialType) setType(initialType);
+  }, [initialType]);
 
   const palette = isDark ? ACCENT_COLORS_DARK : ACCENT_COLORS_LIGHT;
 
@@ -38,7 +60,7 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }
     // Formu sıfırla
     setTitle('');
     setContent('');
-    setType('note');
+    setType(boardTemplate === 'flowchart' ? 'flow_process' : 'note');
     setSelectedColor('');
     onClose();
   };
@@ -46,17 +68,31 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }
   const handleClose = () => {
     setTitle('');
     setContent('');
-    setType('note');
+    setType(boardTemplate === 'flowchart' ? 'flow_process' : 'note');
     setSelectedColor('');
     onClose();
   };
 
-  const typeOptions: { key: 'note' | 'task'; icon: string; label: string }[] = [
-    { key: 'note', icon: '📝', label: 'Not' },
-    { key: 'task', icon: '✅', label: 'Görev' },
-  ];
+  // Build type options based on boardTemplate
+  const typeOptions = boardTemplate === 'flowchart'
+    ? [
+        { key: 'note', icon: 'file-text', provider: 'Feather', label: 'Not' },
+        ...FLOW_SHAPES.map(s => ({ key: s.key, icon: s.icon, provider: s.provider, label: s.label })),
+      ]
+    : [
+        { key: 'note', icon: 'file-text', provider: 'Feather', label: 'Not' },
+        { key: 'task', icon: 'check-square', provider: 'Feather', label: 'Görev' },
+      ];
 
+  const isFlowType = FLOW_SHAPES.some(s => s.key === type);
   const isValid = title.trim().length > 0;
+
+  const renderIcon = (provider: string, name: string, size: number, color: string) => {
+    if (provider === 'Feather') return <Feather name={name as any} size={size} color={color} />;
+    if (provider === 'Ionicons') return <Ionicons name={name as any} size={size} color={color} />;
+    if (provider === 'MaterialCommunityIcons') return <MaterialCommunityIcons name={name as any} size={size} color={color} />;
+    return null;
+  };
 
   return (
     <Modal
@@ -90,7 +126,19 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }
 
           {/* Başlık */}
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Yeni Öğe Ekle</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              {initialType && (
+                <View style={[styles.typeIconBadge, { backgroundColor: `${colors.accent}15` }]}>
+                  {renderIcon(
+                    typeOptions.find(o => o.key === type)?.provider || 'Feather',
+                    typeOptions.find(o => o.key === type)?.icon || 'plus',
+                    20,
+                    colors.accent
+                  )}
+                </View>
+              )}
+              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Yeni Öğe Ekle</Text>
+            </View>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <View style={[styles.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)' }]}>
                 <Text style={[styles.closeBtnText, { color: colors.textSecondary }]}>✕</Text>
@@ -99,35 +147,41 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }
           </View>
 
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            {/* ── Tür Seçimi ── */}
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Tür</Text>
-            <View style={styles.typeRow}>
-              {typeOptions.map(({ key, icon, label }) => {
-                const isActive = type === key;
-                const accentColor = key === 'note'
-                  ? (isDark ? '#34d399' : '#10b981')
-                  : (isDark ? '#818cf8' : '#6366f1');
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.typeBtn,
-                      {
-                        backgroundColor: isActive ? `${accentColor}18` : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
-                        borderColor: isActive ? accentColor : colors.border,
-                      },
-                    ]}
-                    onPress={() => setType(key)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.typeBtnIcon}>{icon}</Text>
-                    <Text style={[styles.typeBtnLabel, { color: isActive ? accentColor : colors.textSecondary }]}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {/* ── Tür Seçimi (Sadece başlangıçta tür seçilmemişse veya her zaman görünürse) ── */}
+            {!initialType && (
+              <>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>Tür</Text>
+                <View style={[styles.typeRow, boardTemplate === 'flowchart' && styles.typeRowGrid]}>
+                  {typeOptions.map(({ key, icon, provider, label }) => {
+                    const isActive = type === key;
+                    const accentColor = key === 'note'
+                      ? (isDark ? '#34d399' : '#10b981')
+                      : key === 'task'
+                      ? (isDark ? '#818cf8' : '#6366f1')
+                      : (isDark ? '#a78bfa' : '#7c3aed');
+                    return (
+                      <TouchableOpacity
+                        key={key}
+                        style={[
+                          boardTemplate === 'flowchart' ? styles.typeCardSmall : styles.typeBtn,
+                          {
+                            backgroundColor: isActive ? `${accentColor}18` : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
+                            borderColor: isActive ? accentColor : colors.border,
+                          },
+                        ]}
+                        onPress={() => setType(key as any)}
+                        activeOpacity={0.7}
+                      >
+                        {renderIcon(provider, icon, boardTemplate === 'flowchart' ? 22 : 18, isActive ? accentColor : colors.textSecondary)}
+                        <Text style={[styles.typeBtnLabel, { color: isActive ? accentColor : colors.textSecondary, fontSize: boardTemplate === 'flowchart' ? 11 : 15 }]}>
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
             {/* ── Başlık ── */}
             <Text style={[styles.label, { color: colors.textSecondary }]}>Başlık *</Text>
@@ -140,7 +194,10 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }
                   borderColor: title.trim() ? colors.accent : colors.border,
                 },
               ]}
-              placeholder={type === 'task' ? 'Görev başlığı...' : 'Not başlığı...'}
+              placeholder={
+                isFlowType ? `${type === 'flow_decision' ? 'Karar sorusu' : type === 'flow_data' ? 'Veri adı' : 'Şekil başlığı'}...`
+                : type === 'task' ? 'Görev başlığı...' : 'Not başlığı...'
+              }
               placeholderTextColor={colors.textMuted}
               value={title}
               onChangeText={setTitle}
@@ -220,7 +277,8 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({ visible, onClose, onAdd }
             activeOpacity={0.8}
           >
             <Text style={[styles.addBtnText, { color: isValid ? colors.accentText : colors.textMuted }]}>
-              {type === 'task' ? '✅ Görevi Ekle' : '📝 Notu Ekle'}
+              {isFlowType ? `${FLOW_SHAPES.find(s => s.key === type)?.label ?? 'Şekil'} Ekle`
+                : type === 'task' ? 'Görevi Ekle' : 'Notu Ekle'}
             </Text>
           </TouchableOpacity>
 
@@ -275,6 +333,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
   },
+  typeIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   closeBtn: {
     width: 32,
     height: 32,
@@ -298,6 +363,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 16,
+    flexWrap: 'wrap',
+  },
+  typeRowGrid: {
+    flexWrap: 'wrap',
   },
   typeBtn: {
     flex: 1,
@@ -308,10 +377,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     gap: 6,
+    minWidth: '45%',
   },
-  typeBtnIcon: {
-    fontSize: 18,
+  typeCardSmall: {
+    width: '22%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 4,
   },
+  typeBtnIcon: { fontSize: 18 },
+  typeBtnIconLarge: { fontSize: 22 },
   typeBtnLabel: {
     fontSize: 15,
     fontWeight: '700',

@@ -187,7 +187,7 @@ def generate_ai_workflow(board_id: str, prompt: str = Body(..., embed=True), use
     if not allowed:
         raise HTTPException(status_code=429, detail=reason)
 
-    ai_nodes, ai_edges = generate_workflow_from_prompt(prompt)
+    ai_nodes, ai_edges = generate_workflow_from_prompt(prompt, template=board.get("template", "basic"))
     if not ai_nodes:
          raise HTTPException(status_code=500, detail="Failed to generate AI workflow.")
          

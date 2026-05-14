@@ -1,12 +1,11 @@
-import React from 'react';
-import { View, StyleSheet, Dimensions, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Alert, Dimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withDecay } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { NodeItem, Position, EdgeItem } from '../types/models';
 import DraggableNode from './DraggableNode';
 import { useTheme } from '../context/ThemeContext';
-import Svg, { Line, Defs, Marker, Path } from 'react-native-svg';
-import { useState } from 'react';
+import Svg, { Defs, Marker, Path, G } from 'react-native-svg';
 
 interface Props {
   nodes: NodeItem[];
@@ -19,29 +18,34 @@ interface Props {
 }
 
 const NODE_W = 200;
-const NODE_H = 130; // Updated to match exact compact card height
+const NODE_H = 160;
 
 const HANDLE_OFFSETS: Record<string, { cx: number; cy: number }> = {
-  top: { cx: NODE_W / 2, cy: 0 },
-  right: { cx: NODE_W, cy: NODE_H / 2 },
+  top:    { cx: NODE_W / 2, cy: 0 },
+  right:  { cx: NODE_W,     cy: NODE_H / 2 },
   bottom: { cx: NODE_W / 2, cy: NODE_H },
-  left: { cx: 0, cy: NODE_H / 2 },
+  left:   { cx: 0,          cy: NODE_H / 2 },
 };
 
-function getHandlePos(node: NodeItem, handle: string) {
-  const off = HANDLE_OFFSETS[handle] ?? HANDLE_OFFSETS['right'];
-  return { x: (node.position?.x || 0) + off.cx, y: (node.position?.y || 0) + off.cy };
+function getHandlePos(node: NodeItem, handle: string | null | undefined) {
+  const raw  = (handle || 'right').split('-').pop() || 'right';
+  const off  = HANDLE_OFFSETS[raw] || HANDLE_OFFSETS.right;
+  const nx   = Number(node.position?.x) || 0;
+  const ny   = Number(node.position?.y) || 0;
+  return { x: nx + off.cx, y: ny + off.cy };
 }
 
-const MobileCanvas: React.FC<Props> = ({ nodes, edges, onNodeDragEnd, onNodeDelete, onNodeEdit, onConnectNodes, onEdgeDelete }) => {
-  const { colors, isDark } = useTheme();
+const MobileCanvas: React.FC<Props> = ({
+  nodes, edges, onNodeDragEnd, onNodeDelete, onNodeEdit, onConnectNodes, onEdgeDelete,
+}) => {
+  const { colors } = useTheme();
 
-  const scale = useSharedValue(1);
+  const scale      = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const savedTranslateX = useSharedValue(0);
-  const savedTranslateY = useSharedValue(0);
+  const savedTX    = useSharedValue(0);
+  const savedTY    = useSharedValue(0);
 
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
 
@@ -49,32 +53,28 @@ const MobileCanvas: React.FC<Props> = ({ nodes, edges, onNodeDragEnd, onNodeDele
     if (!connectingFrom) {
       setConnectingFrom(id);
     } else {
-      if (connectingFrom !== id) {
-        onConnectNodes(connectingFrom, id);
-      }
+      if (connectingFrom !== id) onConnectNodes(connectingFrom, id);
       setConnectingFrom(null);
     }
   };
 
   const pinchGesture = Gesture.Pinch()
-    .onUpdate((e) => {
-      // Limit zoom between 0.5x and 2x
-      const newScale = savedScale.value * e.scale;
-      scale.value = Math.max(0.5, Math.min(newScale, 2.0));
+    .onUpdate(e => {
+      scale.value = Math.max(0.1, Math.min(savedScale.value * e.scale, 5));
     })
     .onEnd(() => {
       savedScale.value = scale.value;
     });
 
   const panGesture = Gesture.Pan()
-    .minDistance(10) // Allow taps to pass through to nodes
-    .onUpdate((e) => {
-      translateX.value = savedTranslateX.value + e.translationX;
-      translateY.value = savedTranslateY.value + e.translationY;
+    .minDistance(10)
+    .onUpdate(e => {
+      translateX.value = savedTX.value + e.translationX;
+      translateY.value = savedTY.value + e.translationY;
     })
     .onEnd(() => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
+      savedTX.value = translateX.value;
+      savedTY.value = translateY.value;
     });
 
   const composed = Gesture.Simultaneous(panGesture, pinchGesture);
@@ -87,74 +87,79 @@ const MobileCanvas: React.FC<Props> = ({ nodes, edges, onNodeDragEnd, onNodeDele
     ],
   }));
 
-  // A subtle pattern background
-  const dotColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={[styles.container, { backgroundColor: colors.background }]}>
         <Animated.View style={[styles.canvas, animatedStyle]}>
-          <Svg style={[StyleSheet.absoluteFill, { overflow: 'visible' }]} width="100%" height="100%">
+          {/* Extremely simple SVG setup - fixed size for stability */}
+          <Svg
+            width={3000}
+            height={3000}
+            style={{ position: 'absolute', top: -500, left: -500 }}
+            pointerEvents="box-none"
+          >
             <Defs>
-              <Marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <Path d="M 0 0 L 10 5 L 0 10 z" fill={colors.textSecondary} />
+              <Marker
+                id="arrow"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <Path d="M 0 0 L 10 5 L 0 10 z" fill={colors.accent} />
               </Marker>
             </Defs>
-            {edges.map(edge => {
-              const sourceNode = nodes.find(n => n.id === edge.source);
-              const targetNode = nodes.find(n => n.id === edge.target);
-              if (!sourceNode || !targetNode) return null;
 
-              const sHandle = edge.sourceHandle || 'right';
-              const tHandle = edge.targetHandle || 'left';
-              
-              const sPos = getHandlePos(sourceNode, sHandle);
-              const tPos = getHandlePos(targetNode, tHandle);
+            <G transform="translate(500, 500)">
+              {edges.map(edge => {
+                const src = nodes.find(n => String(n.id) === String(edge.source));
+                const tgt = nodes.find(n => String(n.id) === String(edge.target));
+                if (!src || !tgt) return null;
 
-              // Smart curve based on handle orientation
-              let d = '';
-              if (sHandle === 'bottom' || sHandle === 'top' || tHandle === 'top' || tHandle === 'bottom') {
-                const cy = (sPos.y + tPos.y) / 2;
-                d = `M ${sPos.x} ${sPos.y} C ${sPos.x} ${cy}, ${tPos.x} ${cy}, ${tPos.x} ${tPos.y}`;
-              } else {
-                const cx = (sPos.x + tPos.x) / 2;
-                d = `M ${sPos.x} ${sPos.y} C ${cx} ${sPos.y}, ${cx} ${tPos.y}, ${tPos.x} ${tPos.y}`;
-              }
+                const s = getHandlePos(src, edge.sourceHandle);
+                const t = getHandlePos(tgt, edge.targetHandle);
 
-              return (
-                <React.Fragment key={edge.id}>
-                  {/* Visible path */}
-                  <Path 
-                    d={d}
-                    stroke={colors.textSecondary}
-                    strokeWidth={2.5}
-                    fill="none"
-                    markerEnd="url(#arrow)"
-                    opacity={0.8}
-                  />
-                  {/* Invisible hit area for deletion */}
-                  <Path
-                    d={d}
-                    stroke="transparent"
-                    strokeWidth={20}
-                    fill="none"
-                    onPress={() => {
-                      Alert.alert(
-                        "Bağlantıyı Sil",
-                        "Bu bağlantıyı silmek istediğinize emin misiniz?",
-                        [
-                          { text: "İptal", style: "cancel" },
-                          { text: "Sil", style: "destructive", onPress: () => {
-                            onEdgeDelete?.(edge.id);
-                          }}
-                        ]
-                      );
-                    }}
-                  />
-                </React.Fragment>
-              );
-            })}
+                const rawHandle = (edge.sourceHandle || 'right').split('-').pop() || 'right';
+                const isVertical = rawHandle === 'top' || rawHandle === 'bottom';
+                
+                const d = isVertical
+                  ? `M ${s.x} ${s.y} C ${s.x} ${(s.y + t.y) / 2}, ${t.x} ${(s.y + t.y) / 2}, ${t.x} ${t.y}`
+                  : `M ${s.x} ${s.y} C ${(s.x + t.x) / 2} ${s.y}, ${(s.x + t.x) / 2} ${t.y}, ${t.x} ${t.y}`;
+
+                return (
+                  <React.Fragment key={edge.id || `${edge.source}-${edge.target}`}>
+                    <Path
+                      d={d}
+                      stroke={colors.accent}
+                      strokeWidth={2.5}
+                      fill="none"
+                      markerEnd="url(#arrow)"
+                      opacity={0.8}
+                    />
+                    <Path
+                      d={d}
+                      stroke="transparent"
+                      strokeWidth={24}
+                      fill="none"
+                      onPress={() =>
+                        Alert.alert(
+                          'Sil',
+                          'Bağlantıyı silmek istiyor musunuz?',
+                          [
+                            { text: 'İptal', style: 'cancel' },
+                            { text: 'Sil', style: 'destructive', onPress: () => onEdgeDelete?.(edge.id) },
+                          ],
+                        )
+                      }
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </G>
           </Svg>
+
           {nodes.map(node => (
             <DraggableNode
               key={node.id}
@@ -167,20 +172,24 @@ const MobileCanvas: React.FC<Props> = ({ nodes, edges, onNodeDragEnd, onNodeDele
             />
           ))}
         </Animated.View>
+
+        {/* Debug info if no edges show up */}
+        {edges.length > 0 && nodes.length > 0 && (
+          <View style={styles.debug}>
+            <Text style={{ fontSize: 10, color: colors.textSecondary }}>
+              {nodes.length} N / {edges.length} E
+            </Text>
+          </View>
+        )}
       </Animated.View>
     </GestureDetector>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  canvas: {
-    flex: 1,
-    overflow: 'visible',
-  },
+  container: { flex: 1, overflow: 'hidden' },
+  canvas:    { flex: 1, overflow: 'visible' },
+  debug: { position: 'absolute', top: 10, left: 10, padding: 4, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 4 },
 });
 
 export default MobileCanvas;

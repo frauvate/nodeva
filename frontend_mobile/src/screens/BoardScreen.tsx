@@ -9,6 +9,10 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
+  Pressable,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useBoardStore } from '../store/useBoardStore';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -17,30 +21,55 @@ import { useTheme } from '../context/ThemeContext';
 import { NodeItem, EdgeItem, TaskStatus } from '../types/models';
 import AddNodeDialog from '../components/AddNodeDialog';
 import NodeComponent from '../components/NodeComponent';
+import FlowNodeCard from '../components/FlowNodeCard';
 import EditNodeSheet from '../components/EditNodeSheet';
 import MobileCanvas from '../components/MobileCanvas';
+import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
 type Props = StackScreenProps<RootStackParamList, 'Board'>;
 
-type TabKey = 'tasks' | 'notes';
+type TabKey = 'tasks' | 'notes' | 'flow';
+
+const FLOW_TYPES = ['flow_start', 'flow_end', 'flow_process', 'flow_decision', 'flow_data'];
 
 /* ─── Görev grupları ─── */
-const TASK_GROUPS: { key: TaskStatus; label: string; color: string; emptyLabel: string }[] = [
-  { key: 'todo',        label: 'Başlamadı',    color: '#ef4444', emptyLabel: 'Bekleyen görev yok' },
-  { key: 'in_progress', label: 'Devam Ediyor', color: '#f59e0b', emptyLabel: 'Devam eden görev yok' },
-  { key: 'done',        label: 'Bitti',         color: '#10b981', emptyLabel: 'Tamamlanan görev yok' },
+const TASK_GROUPS: { key: TaskStatus; label: string; color: string; emptyLabel: string; icon: string }[] = [
+  { key: 'todo',        label: 'Başlamadı',    color: '#ef4444', emptyLabel: 'Bekleyen görev yok', icon: 'circle' },
+  { key: 'in_progress', label: 'Devam Ediyor', color: '#f59e0b', emptyLabel: 'Devam eden görev yok', icon: 'clock' },
+  { key: 'done',        label: 'Bitti',         color: '#10b981', emptyLabel: 'Tamamlanan görev yok', icon: 'check-circle' },
 ];
 
 const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
-  const { boardId } = route.params;
-  const { activeBoard, selectBoard, addNode, deleteNode, updateNode, saveBoard, deleteEdge, isLoading, error } = useBoardStore();
+  const { boardId, template: routeTemplate } = route.params;
+  const { activeBoard, selectBoard, addNode, deleteNode, updateNode, saveBoard, deleteEdge, generateAI, shareBoard, isLoading, error } = useBoardStore();
   const { colors, isDark, toggleTheme } = useTheme();
 
-  const [activeTab, setActiveTab]           = useState<TabKey>('tasks');
-  const [dialogVisible, setDialogVisible]   = useState(false);
-  const [editingNode, setEditingNode]       = useState<NodeItem | null>(null);
+  const boardTemplate: string =
+    routeTemplate ||
+    activeBoard?.template ||
+    ((activeBoard?.nodes || []).some(n => FLOW_TYPES.includes(n.type)) ? 'flowchart' : 'basic');
+
+  const isFlowchart = boardTemplate === 'flowchart';
+
+  const [activeTab, setActiveTab]               = useState<TabKey>('tasks');
+  const [dialogVisible, setDialogVisible]       = useState(false);
+  const [editingNode, setEditingNode]           = useState<NodeItem | null>(null);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
-  const [viewMode, setViewMode]             = useState<'structured' | 'freeflow'>('structured');
+  const [viewMode, setViewMode]                 = useState<'structured' | 'freeflow'>(isFlowchart ? 'freeflow' : 'structured');
+  const [typeMenuVisible, setTypeMenuVisible]   = useState(false);
+  const [selectedType, setSelectedType]         = useState<string | undefined>(undefined);
+  const [aiModalVisible, setAiModalVisible]     = useState(false);
+  const [aiPrompt, setAiPrompt]                 = useState('');
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [shareEmail, setShareEmail]             = useState('');
+
+  // If template changes or is resolved, ensure flowchart boards stay in freeflow
+  useEffect(() => {
+    if (isFlowchart) {
+      setViewMode('freeflow');
+    }
+  }, [isFlowchart]);
+
 
   /* Navigator header'ını kapat — kendi toolbar'ımızı kullanıyoruz */
   useEffect(() => { navigation.setOptions({ headerShown: false }); }, [navigation]);
@@ -105,9 +134,33 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
     saveBoard();
   };
 
+  const handleShareBoard = async () => {
+    if (!shareEmail.trim()) return;
+    try {
+      await shareBoard(boardId, shareEmail.trim());
+      setShareEmail('');
+      setShareModalVisible(false);
+      Alert.alert('Başarılı', 'Pano paylaşıldı. Artık bir ekip panosu olarak kullanılabilir.');
+    } catch (err) {
+      Alert.alert('Hata', 'Pano paylaşılamadı.');
+    }
+  };
+
   /* ─── Derived lists ─── */
-  const tasks = activeBoard?.nodes.filter((n) => n.type === 'task') ?? [];
-  const notes = activeBoard?.nodes.filter((n) => n.type === 'note')  ?? [];
+  const tasks     = activeBoard?.nodes.filter((n) => n.type === 'task') ?? [];
+  const notes     = activeBoard?.nodes.filter((n) => n.type === 'note')  ?? [];
+  const flowNodes = activeBoard?.nodes.filter((n) => FLOW_TYPES.includes(n.type)) ?? [];
+
+  // Flowchart boards: only a Notes tab (flow elements shown inline, no task tab)
+  // Basic boards: Tasks + Notes tabs
+  const tabItems: { key: TabKey; icon: string; label: string; count: number }[] =
+    isFlowchart
+      ? [{ key: 'notes', icon: 'file-text', label: 'Notlar', count: notes.length }]
+      : [
+          { key: 'tasks', icon: 'check-square', label: 'Görevler', count: tasks.length },
+          { key: 'notes', icon: 'file-text', label: 'Notlar',   count: notes.length },
+        ];
+
 
   /* ─── States ─── */
   if (isLoading && !activeBoard) {
@@ -125,7 +178,7 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
         <View style={[styles.centered, { padding: 24 }]}>
-          <Text style={styles.errorEmoji}>⚠️</Text>
+          <Feather name="alert-triangle" size={40} color={colors.error} style={{ marginBottom: 12 }} />
           <Text style={{ color: colors.error, fontSize: 15, textAlign: 'center', marginBottom: 20 }}>{error}</Text>
           <TouchableOpacity style={[styles.retryBtn, { backgroundColor: colors.accent }]} onPress={() => selectBoard(boardId)}>
             <Text style={{ color: colors.accentText, fontWeight: '700' }}>Tekrar Dene</Text>
@@ -164,16 +217,24 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
             {activeBoard.title}
           </Text>
           <Text style={[styles.toolbarSub, { color: colors.textSecondary }]}>
-            {tasks.length} görev · {notes.length} not
+            {boardTemplate === 'flowchart'
+              ? `${flowNodes.length} şekil · ${notes.length} not`
+              : `${tasks.length} görev · ${notes.length} not`
+            }
           </Text>
         </View>
 
         <View style={{ flexDirection: 'row' }}>
-          <TouchableOpacity onPress={() => setViewMode(v => v === 'structured' ? 'freeflow' : 'structured')} style={styles.toolbarBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.toolbarIcon}>{viewMode === 'structured' ? '🖼️' : '📋'}</Text>
-          </TouchableOpacity>
+          {!isFlowchart && (
+            <TouchableOpacity onPress={() => setViewMode(v => v === 'structured' ? 'freeflow' : 'structured')} style={styles.toolbarBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Feather name={viewMode === 'structured' ? 'image' : 'list'} size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={toggleTheme} style={styles.toolbarBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.toolbarIcon}>{isDark ? '☀️' : '🌙'}</Text>
+            <Feather name={isDark ? "sun" : "moon"} size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShareModalVisible(true)} style={styles.toolbarBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="share-social-outline" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -195,12 +256,9 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
         </View>
       ) : (
         <>
-          {/* ── 2 Tab Bar ── */}
+          {/* ── Tab Bar ── */}
           <View style={[styles.tabBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-            {([
-              { key: 'tasks' as TabKey, icon: '✅', label: 'Görevler', count: tasks.length },
-              { key: 'notes' as TabKey, icon: '📝', label: 'Notlar',   count: notes.length },
-            ]).map(({ key, icon, label, count }) => {
+            {tabItems.map(({ key, icon, label, count }) => {
               const isActive = activeTab === key;
               return (
                 <TouchableOpacity
@@ -209,7 +267,7 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
                   onPress={() => setActiveTab(key)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.tabIcon}>{icon}</Text>
+                  <Feather name={icon as any} size={14} color={isActive ? colors.accent : colors.textSecondary} style={{ marginRight: 2 }} />
                   <Text style={[styles.tabLabel, { color: isActive ? colors.accent : colors.textSecondary }]}>{label}</Text>
                   <View style={[styles.tabBadge, { backgroundColor: isActive ? colors.accent : colors.border }]}>
                     <Text style={[styles.tabBadgeText, { color: isActive ? colors.accentText : colors.textSecondary }]}>{count}</Text>
@@ -222,33 +280,31 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
           {/* ── Content ── */}
           <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-            {/* ── GÖREVLER SEKMESİ ── */}
-        {activeTab === 'tasks' && (
+            {/* ── GÖREVLER SEKMESİ (basic only) ── */}
+        {!isFlowchart && activeTab === 'tasks' && (
           <>
             {tasks.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📋</Text>
+                <Feather name="list" size={48} color={colors.textSecondary} style={{ marginBottom: 14 }} />
                 <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Henüz görev yok</Text>
                 <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                   + butonuna basarak görev ekleyebilirsin.
                 </Text>
               </View>
             ) : (
-              TASK_GROUPS.map(({ key, label, color, emptyLabel }) => {
+              TASK_GROUPS.map(({ key, label, color, emptyLabel, icon }) => {
                 const groupNodes = tasks.filter(
                   (n) => (n.data.status ?? 'todo') === key,
                 );
                 return (
                   <View key={key} style={styles.group}>
-                    {/* Grup Başlığı */}
                     <View style={styles.groupHeader}>
-                      <View style={[styles.groupDot, { backgroundColor: color }]} />
+                      <Feather name={icon as any} size={14} color={color} />
                       <Text style={[styles.groupTitle, { color: colors.textPrimary }]}>{label}</Text>
                       <View style={[styles.groupBadge, { backgroundColor: `${color}20` }]}>
                         <Text style={[styles.groupBadgeText, { color }]}>{groupNodes.length}</Text>
                       </View>
                     </View>
-
                     {groupNodes.length === 0 ? (
                       <Text style={[styles.groupEmpty, { color: colors.textMuted }]}>{emptyLabel}</Text>
                     ) : (
@@ -269,12 +325,70 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
           </>
         )}
 
+        {/* ── FLOWCHART ANA İÇERİĞİ (tab yok, her şey inline) ── */}
+        {isFlowchart && (
+          <>
+            {/* Akış elemanları — geometrik kartlar */}
+            <View style={styles.flowSection}>
+              <View style={styles.flowSectionHeader}>
+                <Ionicons name="git-network-outline" size={18} color={colors.accent} />
+                <Text style={[styles.flowSectionTitle, { color: colors.textPrimary }]}>Akış Öğeleri</Text>
+                <View style={[styles.flowSectionBadge, { backgroundColor: `${colors.accent}20` }]}>
+                  <Text style={[styles.flowSectionBadgeText, { color: colors.accent }]}>{flowNodes.length}</Text>
+                </View>
+              </View>
+
+              {flowNodes.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Feather name="git-merge" size={48} color={colors.textSecondary} style={{ marginBottom: 14 }} />
+                  <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Henüz akış öğesi yok</Text>
+                  <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+                    + butonuna basarak akış elemanı ekleyebilirsin.
+                  </Text>
+                </View>
+              ) : (
+                flowNodes.map((node) => (
+                  <FlowNodeCard
+                    key={node.id}
+                    node={node}
+                    onDelete={handleDelete}
+                    onEdit={handleOpenEdit}
+                  />
+                ))
+              )}
+            </View>
+
+            {/* Notlar bölümü (flowchart panolarında da notlar eklenebilir) */}
+            {notes.length > 0 && (
+              <View style={styles.group}>
+                <View style={styles.groupHeader}>
+                  <Feather name="file-text" size={14} color="#10b981" />
+                  <Text style={[styles.groupTitle, { color: colors.textPrimary }]}>Notlar</Text>
+                  <View style={[styles.groupBadge, { backgroundColor: 'rgba(16,185,129,0.12)' }]}>
+                    <Text style={[styles.groupBadgeText, { color: '#10b981' }]}>{notes.length}</Text>
+                  </View>
+                </View>
+                {notes.map((node) => (
+                  <NodeComponent
+                    key={node.id}
+                    node={node}
+                    onDelete={handleDelete}
+                    onEdit={handleOpenEdit}
+                    style={styles.nodeSpacing}
+                  />
+                ))}
+              </View>
+            )}
+          </>
+        )}
+
+
         {/* ── NOTLAR SEKMESİ ── */}
         {activeTab === 'notes' && (
           <>
             {notes.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📝</Text>
+                <Feather name="file-text" size={48} color={colors.textSecondary} style={{ marginBottom: 14 }} />
                 <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Henüz not yok</Text>
                 <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                   + butonuna basarak not ekleyebilirsin.
@@ -285,12 +399,12 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
                 {/* Notlar bölüm başlığı */}
                 <View style={styles.group}>
                   <View style={styles.groupHeader}>
-                    <View style={[styles.groupDot, { backgroundColor: '#10b981' }]} />
-                    <Text style={[styles.groupTitle, { color: colors.textPrimary }]}>Tüm Notlar</Text>
-                    <View style={[styles.groupBadge, { backgroundColor: 'rgba(16,185,129,0.12)' }]}>
-                      <Text style={[styles.groupBadgeText, { color: '#10b981' }]}>{notes.length}</Text>
-                    </View>
+                  <Feather name="file-text" size={14} color="#10b981" />
+                  <Text style={[styles.groupTitle, { color: colors.textPrimary }]}>Tüm Notlar</Text>
+                  <View style={[styles.groupBadge, { backgroundColor: 'rgba(16,185,129,0.12)' }]}>
+                    <Text style={[styles.groupBadgeText, { color: '#10b981' }]}>{notes.length}</Text>
                   </View>
+                </View>
 
                   {notes.map((node) => (
                     <NodeComponent
@@ -312,21 +426,183 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
         </>
       )}
 
+      {/* ── Type Selector Menu ── */}
+      {typeMenuVisible && (
+        <View style={styles.menuOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setTypeMenuVisible(false)} />
+          <View style={[styles.typeMenu, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {(isFlowchart
+              ? [
+                  { key: 'flow_start',    label: 'Başlangıç', icon: 'ellipse-outline', provider: 'Ionicons' },
+                  { key: 'flow_process',  label: 'İşlem',     icon: 'square-outline',  provider: 'Ionicons' },
+                  { key: 'flow_decision', label: 'Karar',     icon: 'rhombus-outline', provider: 'MaterialCommunityIcons' },
+                  { key: 'flow_data',     label: 'Veri',      icon: 'card-outline',    provider: 'Ionicons' },
+                  { key: 'note',          label: 'Not',      icon: 'file-text',       provider: 'Feather' },
+                  { key: 'ai',            label: 'AI ile Oluştur', icon: 'zap',       provider: 'Feather' },
+                ]
+              : [
+                  { key: 'task', label: 'Görev', icon: 'check-square', provider: 'Feather' },
+                  { key: 'note', label: 'Not',   icon: 'file-text',    provider: 'Feather' },
+                  { key: 'ai',   label: 'AI ile Oluştur', icon: 'zap', provider: 'Feather' },
+                ]
+            ).map((item) => (
+              <TouchableOpacity
+                key={item.key}
+                style={styles.menuItem}
+                onPress={() => {
+                  if (item.key === 'ai') {
+                    setAiModalVisible(true);
+                  } else {
+                    setSelectedType(item.key);
+                    setDialogVisible(true);
+                  }
+                  setTypeMenuVisible(false);
+                }}
+              >
+                <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>{item.label}</Text>
+                <View style={[styles.menuItemIcon, { backgroundColor: `${colors.accent}15` }]}>
+                  {item.provider === 'Feather' && <Feather name={item.icon as any} size={18} color={colors.accent} />}
+                  {item.provider === 'Ionicons' && <Ionicons name={item.icon as any} size={18} color={colors.accent} />}
+                  {item.provider === 'MaterialCommunityIcons' && <MaterialCommunityIcons name={item.icon as any} size={18} color={colors.accent} />}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* ── FAB ── */}
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: colors.accent }]}
-        onPress={() => setDialogVisible(true)}
+        onPress={() => setTypeMenuVisible(!typeMenuVisible)}
         activeOpacity={0.85}
       >
-        <Text style={[styles.fabText, { color: colors.accentText }]}>+</Text>
+        <Feather name={typeMenuVisible ? "x" : "plus"} size={30} color={colors.accentText} />
       </TouchableOpacity>
 
       {/* ── Add Dialog ── */}
       <AddNodeDialog
         visible={dialogVisible}
-        onClose={() => setDialogVisible(false)}
+        onClose={() => {
+          setDialogVisible(false);
+          setSelectedType(undefined);
+        }}
         onAdd={handleAddNode}
+        boardTemplate={boardTemplate}
+        initialType={selectedType}
       />
+
+      {/* ── AI Prompt Modal ── */}
+      <Modal
+        visible={aiModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAiModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          style={styles.aiModalOverlay}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setAiModalVisible(false)} />
+          <View style={[styles.aiModal, { backgroundColor: isDark ? '#1C1C28' : '#FFF' }]}>
+            {/* Modal Handle */}
+            <View style={styles.modalHandleContainer}>
+              <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+            </View>
+
+            <View style={styles.aiModalHeader}>
+              <View style={[styles.aiIconBadge, { backgroundColor: `${colors.accent}15` }]}>
+                <Feather name="zap" size={22} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.aiModalTitle, { color: colors.textPrimary }]}>AI ile Tasarla</Text>
+                <Text style={[styles.aiModalSubtitle, { color: colors.textSecondary }]}>Süreci yapay zeka ile otomatikleştirin</Text>
+              </View>
+              <TouchableOpacity onPress={() => setAiModalVisible(false)} style={styles.aiCloseBtn}>
+                <Feather name="x" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.aiInputContainer, { backgroundColor: isDark ? '#252538' : '#F8F9FA', borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.aiInput, { color: colors.textPrimary }]}
+                placeholder="Nasıl bir akış hayal ediyorsunuz? (Örn: Müşteri destek süreci)"
+                placeholderTextColor={colors.textMuted}
+                multiline
+                value={aiPrompt}
+                onChangeText={setAiPrompt}
+                autoFocus
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.aiSubmitBtn, { backgroundColor: colors.accent, opacity: !aiPrompt.trim() ? 0.6 : 1 }]}
+              disabled={!aiPrompt.trim() || isLoading}
+              onPress={async () => {
+                await generateAI(boardId, aiPrompt);
+                setAiPrompt('');
+                setAiModalVisible(false);
+              }}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={[styles.aiSubmitText, { color: '#FFF' }]}>Süreci Oluştur</Text>
+                  <Feather name="arrow-right" size={18} color="#FFF" />
+                </View>
+              )}
+            </TouchableOpacity>
+            
+            <Text style={styles.aiFooterHint}>
+              AI tarafından oluşturulan öğeleri daha sonra düzenleyebilirsiniz.
+            </Text>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Share Modal ── */}
+      <Modal visible={shareModalVisible} transparent animationType="fade">
+        <Pressable style={styles.aiModalOverlay} onPress={() => setShareModalVisible(false)}>
+          <View style={[styles.aiModal, { backgroundColor: isDark ? '#1c1c28' : '#FFF' }]}>
+            <View style={styles.aiModalHeader}>
+              <View style={[styles.aiIconBadge, { backgroundColor: `${colors.accent}15` }]}>
+                <Ionicons name="share-social-outline" size={24} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.aiModalTitle, { color: colors.textPrimary }]}>Panoyu Paylaş</Text>
+                <Text style={[styles.aiModalSubtitle, { color: colors.textSecondary }]}>Pano otomatik olarak ekibe dönüşür</Text>
+              </View>
+            </View>
+
+            <Text style={{ color: colors.textSecondary, marginBottom: 16, fontSize: 13 }}>
+              Bu panoyu bir kullanıcıyla paylaşın. Pano içeriği ekip üyeleriyle ortak hale gelecektir.
+            </Text>
+
+            <View style={[styles.aiInputContainer, { backgroundColor: isDark ? '#252538' : '#F8F9FA', borderColor: colors.border, minHeight: 60, height: 60, marginBottom: 20 }]}>
+              <TextInput
+                style={[styles.aiInput, { color: colors.textPrimary, height: 40 }]}
+                placeholder="E-posta adresi..."
+                placeholderTextColor={colors.textMuted}
+                value={shareEmail}
+                onChangeText={setShareEmail}
+                autoFocus
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity style={{ flex: 1, height: 56, alignItems: 'center', justifyContent: 'center' }} onPress={() => setShareModalVisible(false)}>
+                <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.aiSubmitBtn, { flex: 2, height: 56, backgroundColor: colors.accent }]} onPress={handleShareBoard}>
+                <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>Paylaş</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* ── Edit Sheet ── */}
       <EditNodeSheet
@@ -346,7 +622,6 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
 const styles = StyleSheet.create({
   safe:    { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorEmoji: { fontSize: 40, marginBottom: 12 },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
 
   /* Toolbar */
@@ -385,7 +660,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  groupDot:       { width: 10, height: 10, borderRadius: 5 },
   groupTitle:     { fontSize: 15, fontWeight: '700', flex: 1 },
   groupBadge:     { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
   groupBadgeText: { fontSize: 12, fontWeight: '700' },
@@ -396,9 +670,23 @@ const styles = StyleSheet.create({
 
   /* Empty */
   emptyState: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 52, marginBottom: 14 },
   emptyTitle: { fontSize: 19, fontWeight: '700', marginBottom: 8 },
   emptySub:   { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+
+  /* Flow Section (flowchart boards — no tab) */
+  flowSection: { marginBottom: 28 },
+  flowSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128,128,128,0.15)',
+  },
+  flowSectionTitle: { fontSize: 16, fontWeight: '800', flex: 1, letterSpacing: -0.2 },
+  flowSectionBadge: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 3 },
+  flowSectionBadgeText: { fontSize: 12, fontWeight: '700' },
 
   /* FAB */
   fab: {
@@ -417,6 +705,139 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   fabText: { fontSize: 36, lineHeight: 40, textAlign: 'center', marginTop: -2 },
+  /* Type Menu */
+  menuOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    paddingBottom: 90,
+    paddingRight: 20,
+    zIndex: 100,
+  },
+  typeMenu: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 8,
+    width: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 12,
+  },
+  menuItemLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  menuItemIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /* AI Modal Redesign */
+  aiModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  aiModal: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 30,
+    elevation: 20,
+  },
+  modalHandleContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+  },
+  aiModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  aiIconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  aiModalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  aiModalSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  aiCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiInputContainer: {
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 16,
+    marginBottom: 24,
+    minHeight: 140,
+  },
+  aiInput: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 24,
+    textAlignVertical: 'top',
+  },
+  aiSubmitBtn: {
+    height: 60,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  aiSubmitText: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  aiFooterHint: {
+    fontSize: 12,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginTop: 16,
+    fontStyle: 'italic',
+  },
 });
 
 export default BoardScreen;
