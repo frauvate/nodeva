@@ -319,6 +319,7 @@ class SupabaseCollection:
 
 # ─── Collection instances ────────────────────────────────────────────────────
 boards_collection        = MockCollection("boards")
+folders_collection       = MockCollection("folders")
 teams_collection         = SupabaseCollection("teams", "teams")
 requests_collection      = SupabaseCollection("team_requests", "requests")
 notifications_collection = SupabaseCollection("notifications", "notifications")

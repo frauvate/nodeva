@@ -18,7 +18,7 @@ import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 interface AddNodeDialogProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (data: { title: string; content: string; type: string; color: string }) => void;
+  onAdd: (data: { title: string; content: string; type: string; color: string; startDate?: string; endDate?: string; progress?: number }) => void;
   boardTemplate?: string;
   initialType?: string;
 }
@@ -41,10 +41,16 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
   initialType
 }) => {
   const { colors, isDark } = useTheme();
+  const today = new Date().toISOString().split('T')[0];
+  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
   const [title, setTitle]           = useState('');
   const [content, setContent]       = useState('');
-  const [type, setType]             = useState<string>(initialType || (boardTemplate === 'flowchart' ? 'flow_process' : 'note'));
+  const [type, setType]             = useState<string>(initialType || (boardTemplate === 'flowchart' ? 'flow_process' : boardTemplate === 'mindmap' ? 'mindmap_main' : boardTemplate === 'timeline' ? 'task' : 'note'));
   const [selectedColor, setSelectedColor] = useState('');
+  const [startDate, setStartDate]   = useState(today);
+  const [endDate, setEndDate]       = useState(nextWeek);
+  const [progress, setProgress]     = useState('0');
 
   // Update type when initialType changes
   React.useEffect(() => {
@@ -53,31 +59,59 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
 
   const palette = isDark ? ACCENT_COLORS_DARK : ACCENT_COLORS_LIGHT;
 
+  const isTimeline = boardTemplate === 'timeline';
+
   const handleAdd = () => {
     if (!title.trim()) return;
     const color = selectedColor || palette[0];
-    onAdd({ title: title.trim(), content: content.trim(), type, color });
-    // Formu sıfırla
+    onAdd({
+      title: title.trim(),
+      content: content.trim(),
+      type,
+      color,
+      startDate: isTimeline ? startDate : undefined,
+      endDate:   isTimeline ? endDate   : undefined,
+      progress:  isTimeline ? (parseInt(progress, 10) || 0) : undefined,
+    });
+    // Reset
     setTitle('');
     setContent('');
-    setType(boardTemplate === 'flowchart' ? 'flow_process' : 'note');
+    setType(boardTemplate === 'flowchart' ? 'flow_process' : boardTemplate === 'mindmap' ? 'mindmap_main' : boardTemplate === 'timeline' ? 'task' : 'note');
     setSelectedColor('');
+    setStartDate(today);
+    setEndDate(nextWeek);
+    setProgress('0');
     onClose();
   };
 
   const handleClose = () => {
     setTitle('');
     setContent('');
-    setType(boardTemplate === 'flowchart' ? 'flow_process' : 'note');
+    setType(boardTemplate === 'flowchart' ? 'flow_process' : boardTemplate === 'mindmap' ? 'mindmap_main' : boardTemplate === 'timeline' ? 'task' : 'note');
     setSelectedColor('');
+    setStartDate(today);
+    setEndDate(nextWeek);
+    setProgress('0');
     onClose();
   };
 
   // Build type options based on boardTemplate
-  const typeOptions = boardTemplate === 'flowchart'
+  const typeOptions = boardTemplate === 'mindmap'
+    ? [
+        { key: 'mindmap_root',  icon: 'git-commit',      provider: 'Feather', label: 'Merkez' },
+        { key: 'mindmap_main',  icon: 'git-branch',      provider: 'Feather', label: 'Ana Başlık' },
+        { key: 'mindmap_sub',   icon: 'corner-down-right', provider: 'Feather', label: 'Alt Başlık' },
+        { key: 'note',          icon: 'file-text',       provider: 'Feather', label: 'Not' },
+      ]
+    : boardTemplate === 'flowchart'
     ? [
         { key: 'note', icon: 'file-text', provider: 'Feather', label: 'Not' },
         ...FLOW_SHAPES.map(s => ({ key: s.key, icon: s.icon, provider: s.provider, label: s.label })),
+      ]
+    : boardTemplate === 'timeline'
+    ? [
+        { key: 'task', icon: 'check-square', provider: 'Feather', label: 'Görev' },
+        { key: 'note', icon: 'file-text',    provider: 'Feather', label: 'Not' },
       ]
     : [
         { key: 'note', icon: 'file-text', provider: 'Feather', label: 'Not' },
@@ -85,6 +119,7 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
       ];
 
   const isFlowType = FLOW_SHAPES.some(s => s.key === type);
+  const isMindmapType = type.startsWith('mindmap_');
   const isValid = title.trim().length > 0;
 
   const renderIcon = (provider: string, name: string, size: number, color: string) => {
@@ -151,7 +186,7 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
             {!initialType && (
               <>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>Tür</Text>
-                <View style={[styles.typeRow, boardTemplate === 'flowchart' && styles.typeRowGrid]}>
+                <View style={[styles.typeRow, (boardTemplate === 'flowchart' || boardTemplate === 'mindmap') && styles.typeRowGrid]}>
                   {typeOptions.map(({ key, icon, provider, label }) => {
                     const isActive = type === key;
                     const accentColor = key === 'note'
@@ -163,7 +198,7 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
                       <TouchableOpacity
                         key={key}
                         style={[
-                          boardTemplate === 'flowchart' ? styles.typeCardSmall : styles.typeBtn,
+                          (boardTemplate === 'flowchart' || boardTemplate === 'mindmap') ? styles.typeCardSmall : styles.typeBtn,
                           {
                             backgroundColor: isActive ? `${accentColor}18` : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
                             borderColor: isActive ? accentColor : colors.border,
@@ -172,8 +207,8 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
                         onPress={() => setType(key as any)}
                         activeOpacity={0.7}
                       >
-                        {renderIcon(provider, icon, boardTemplate === 'flowchart' ? 22 : 18, isActive ? accentColor : colors.textSecondary)}
-                        <Text style={[styles.typeBtnLabel, { color: isActive ? accentColor : colors.textSecondary, fontSize: boardTemplate === 'flowchart' ? 11 : 15 }]}>
+                        {renderIcon(provider, icon, (boardTemplate === 'flowchart' || boardTemplate === 'mindmap') ? 22 : 18, isActive ? accentColor : colors.textSecondary)}
+                        <Text style={[styles.typeBtnLabel, { color: isActive ? accentColor : colors.textSecondary, fontSize: (boardTemplate === 'flowchart' || boardTemplate === 'mindmap') ? 11 : 15 }]}>
                           {label}
                         </Text>
                       </TouchableOpacity>
@@ -196,6 +231,7 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
               ]}
               placeholder={
                 isFlowType ? `${type === 'flow_decision' ? 'Karar sorusu' : type === 'flow_data' ? 'Veri adı' : 'Şekil başlığı'}...`
+                : isMindmapType ? `${type === 'mindmap_root' ? 'Merkez Konu başlığı' : type === 'mindmap_main' ? 'Ana Başlık başlığı' : 'Alt Başlık başlığı'}...`
                 : type === 'task' ? 'Görev başlığı...' : 'Not başlığı...'
               }
               placeholderTextColor={colors.textMuted}
@@ -205,8 +241,50 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
               autoFocus
             />
 
-            {/* ── İçerik ── */}
-            <Text style={[styles.label, { color: colors.textSecondary }]}>İçerik</Text>
+            {/* ── Timeline: Tarih ve İlerleme Alanları ── */}
+            {isTimeline && (
+              <>
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Başlangıç</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', color: colors.textPrimary, borderColor: colors.border, marginBottom: 0 }]}
+                      value={startDate}
+                      onChangeText={setStartDate}
+                      placeholder="YYYY-AA-GG"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numbers-and-punctuation"
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Bitiş</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', color: colors.textPrimary, borderColor: colors.border, marginBottom: 0 }]}
+                      value={endDate}
+                      onChangeText={setEndDate}
+                      placeholder="YYYY-AA-GG"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numbers-and-punctuation"
+                    />
+                  </View>
+                </View>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>İlerleme (0-100)</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', color: colors.textPrimary, borderColor: colors.border }]}
+                  value={progress}
+                  onChangeText={setProgress}
+                  placeholder="0"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                />
+              </>
+            )}
+
+            {/* ── İçerik (timeline'da gizli) ── */}
+            {!isTimeline && (
+              <>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>İçerik</Text>
             <TextInput
               style={[
                 styles.input,
@@ -225,6 +303,8 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
               numberOfLines={4}
               textAlignVertical="top"
             />
+              </>
+            )}
 
             {/* ── Renk ── */}
             <Text style={[styles.label, { color: colors.textSecondary }]}>Renk Etiketi</Text>
@@ -278,6 +358,7 @@ const AddNodeDialog: React.FC<AddNodeDialogProps> = ({
           >
             <Text style={[styles.addBtnText, { color: isValid ? colors.accentText : colors.textMuted }]}>
               {isFlowType ? `${FLOW_SHAPES.find(s => s.key === type)?.label ?? 'Şekil'} Ekle`
+                : isMindmapType ? 'Konu Ekle'
                 : type === 'task' ? 'Görevi Ekle' : 'Notu Ekle'}
             </Text>
           </TouchableOpacity>

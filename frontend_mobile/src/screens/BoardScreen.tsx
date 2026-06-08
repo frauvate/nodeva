@@ -25,6 +25,8 @@ import NodeComponent from '../components/NodeComponent';
 import FlowNodeCard from '../components/FlowNodeCard';
 import EditNodeSheet from '../components/EditNodeSheet';
 import MobileCanvas from '../components/MobileCanvas';
+import KanbanView from '../components/KanbanView';
+import TimelineView from '../components/TimelineView';
 import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
 type Props = StackScreenProps<RootStackParamList, 'Board'>;
@@ -45,12 +47,27 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
   const { activeBoard, selectBoard, addNode, deleteNode, updateNode, saveBoard, deleteEdge, generateAI, shareBoard, isLoading, error } = useBoardStore();
   const { colors, isDark, toggleTheme } = useTheme();
 
-  const boardTemplate: string =
-    routeTemplate ||
-    activeBoard?.template ||
-    ((activeBoard?.nodes || []).some(n => FLOW_TYPES.includes(n.type)) ? 'flowchart' : 'basic');
+  const MINDMAP_TYPES = ['mindmap_root', 'mindmap_main', 'mindmap_sub'];
+  const KANBAN_TYPES  = ['task', 'note'];
+
+  const boardTemplate: string = React.useMemo(() => {
+    // 1. Explicit template from route params (freshly created boards)
+    if (routeTemplate) return routeTemplate;
+    // 2. Saved template field on the board
+    if (activeBoard?.template) return activeBoard.template;
+    // 3. Infer from node types (legacy boards without a template field)
+    const nodes = activeBoard?.nodes || [];
+    if (nodes.some(n => FLOW_TYPES.includes(n.type)))     return 'flowchart';
+    if (nodes.some(n => MINDMAP_TYPES.includes(n.type)))  return 'mindmap';
+    // Timeline: nodes with startDate or endDate
+    if (nodes.some(n => n.data?.startDate || n.data?.endDate)) return 'timeline';
+    return 'basic';
+  }, [routeTemplate, activeBoard?.template, activeBoard?.nodes]);
 
   const isFlowchart = boardTemplate === 'flowchart';
+  const isMindmap   = boardTemplate === 'mindmap';
+  const isKanban    = boardTemplate === 'kanban';
+  const isTimeline  = boardTemplate === 'timeline';
 
   const [activeTab, setActiveTab]               = useState<TabKey>('tasks');
   const [dialogVisible, setDialogVisible]       = useState(false);
@@ -63,13 +80,14 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
   const [aiPrompt, setAiPrompt]                 = useState('');
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [shareEmail, setShareEmail]             = useState('');
+  const [kanbanTargetStatus, setKanbanTargetStatus] = useState<TaskStatus | undefined>(undefined);
 
-  // If template changes or is resolved, ensure flowchart boards stay in freeflow
+  // If template changes or is resolved, ensure flowchart and mindmap boards stay in freeflow
   useEffect(() => {
-    if (isFlowchart) {
+    if (isFlowchart || isMindmap) {
       setViewMode('freeflow');
     }
-  }, [isFlowchart]);
+  }, [isFlowchart, isMindmap]);
 
 
   /* Navigator header'ını kapat — kendi toolbar'ımızı kullanıyoruz */
@@ -77,7 +95,16 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
   useEffect(() => { selectBoard(boardId); }, [boardId, selectBoard]);
 
   /* ─── Store actions ─── */
-  const handleAddNode = (data: { title: string; content: string; type: string; color: string }) => {
+  const handleAddNode = (data: { title: string; content: string; type: string; color: string; startDate?: string; endDate?: string; progress?: number }) => {
+    if (data.type === 'mindmap_root') {
+      const hasRoot = activeBoard?.nodes.some(n => n.type === 'mindmap_root');
+      if (hasRoot) {
+        Alert.alert('Hata', 'Zihin haritasında sadece bir adet Merkez Konu bulunabilir.');
+        return;
+      }
+    }
+    const today = new Date();
+    const toDateStr = (d: Date) => d.toISOString().split('T')[0];
     const newNode: NodeItem = {
       id: Math.random().toString(36).substr(2, 9),
       type: data.type,
@@ -86,11 +113,15 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
         title:   data.title,
         content: data.content,
         color:   data.color,
-        status:  data.type === 'task' ? 'todo' : undefined,
+        status:  isKanban ? (kanbanTargetStatus || 'todo') : (data.type === 'task' ? 'todo' : undefined),
+        startDate: isTimeline ? (data.startDate || toDateStr(today)) : undefined,
+        endDate:   isTimeline ? (data.endDate   || toDateStr(new Date(today.getTime() + 7 * 86400000))) : undefined,
+        progress:  isTimeline ? (data.progress ?? 0) : undefined,
       },
     };
     addNode(newNode);
     saveBoard();
+    setKanbanTargetStatus(undefined);
   };
 
   const handleDelete = (nodeId: string) => {
@@ -105,7 +136,7 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
 
   const handleSaveEdit = (
     nodeId: string,
-    updates: { title: string; content: string; color: string; assignee?: string; status?: TaskStatus },
+    updates: { title: string; content: string; color: string; assignee?: string; status?: TaskStatus; startDate?: string; endDate?: string; progress?: number },
   ) => {
     updateNode(nodeId, updates);
     saveBoard();
@@ -220,13 +251,17 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
           <Text style={[styles.toolbarSub, { color: colors.textSecondary }]}>
             {boardTemplate === 'flowchart'
               ? `${flowNodes.length} şekil · ${notes.length} not`
+              : boardTemplate === 'mindmap'
+              ? `${(activeBoard?.nodes || []).filter(n => n.type.startsWith('mindmap_')).length} konu · ${notes.length} not`
+              : isTimeline
+              ? `${activeBoard.nodes.length} görev`
               : `${tasks.length} görev · ${notes.length} not`
             }
           </Text>
         </View>
 
         <View style={{ flexDirection: 'row' }}>
-          {!isFlowchart && (
+          {!isFlowchart && !isMindmap && !isKanban && !isTimeline && (
             <TouchableOpacity onPress={() => setViewMode(v => v === 'structured' ? 'freeflow' : 'structured')} style={styles.toolbarBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Feather name={viewMode === 'structured' ? 'image' : 'list'} size={22} color={colors.textPrimary} />
             </TouchableOpacity>
@@ -240,11 +275,43 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
         </View>
       </View>
 
-      {viewMode === 'freeflow' ? (
+      {isTimeline ? (
+        <TimelineView
+          nodes={activeBoard.nodes}
+          onNodeEdit={handleOpenEdit}
+          onAddNode={() => {
+            setSelectedType('task');
+            setDialogVisible(true);
+          }}
+          onAiGenerate={() => setAiModalVisible(true)}
+          onUpdateNode={(id, data) => {
+            updateNode(id, data);
+            saveBoard();
+          }}
+        />
+      ) : isKanban ? (
+        <KanbanView
+          boardId={boardId}
+          nodes={activeBoard.nodes}
+          onNodeDelete={handleDelete}
+          onNodeEdit={handleOpenEdit}
+          onAddNode={(status, type) => {
+            setKanbanTargetStatus(status);
+            setSelectedType(type);
+            setDialogVisible(true);
+          }}
+          onUpdateNodeStatus={(id, status) => {
+            updateNode(id, { status });
+            saveBoard();
+          }}
+        />
+      ) : (isFlowchart || isMindmap || viewMode === 'freeflow') ? (
         <View style={{ flex: 1 }}>
-          <Text style={{ textAlign: 'center', padding: 8, fontSize: 12, color: colors.textSecondary, backgroundColor: colors.surface }}>
-            İlişki (ok) kurmak için önce bir karta, sonra diğer karta dokunun.
-          </Text>
+          {!isFlowchart && !isMindmap && (
+            <Text style={{ textAlign: 'center', padding: 8, fontSize: 12, color: colors.textSecondary, backgroundColor: colors.surface }}>
+              İlişki (ok) kurmak için önce bir karta, sonra diğer karta dokunun.
+            </Text>
+          )}
           <MobileCanvas 
              nodes={activeBoard.nodes} 
              edges={activeBoard.edges || []}
@@ -432,7 +499,15 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
         <View style={styles.menuOverlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setTypeMenuVisible(false)} />
           <View style={[styles.typeMenu, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            {(isFlowchart
+            {(isMindmap
+              ? [
+                  { key: 'mindmap_root',  label: 'Merkez Konu', icon: 'git-commit',      provider: 'Feather' },
+                  { key: 'mindmap_main',  label: 'Ana Başlık',  icon: 'git-branch',      provider: 'Feather' },
+                  { key: 'mindmap_sub',   label: 'Alt Başlık',   icon: 'corner-down-right', provider: 'Feather' },
+                  { key: 'note',          label: 'Not',         icon: 'file-text',       provider: 'Feather' },
+                  { key: 'ai',            label: 'AI ile Oluştur', icon: 'zap',          provider: 'Feather' },
+                ]
+              : isFlowchart
               ? [
                   { key: 'flow_start',    label: 'Başlangıç', icon: 'ellipse-outline', provider: 'Ionicons' },
                   { key: 'flow_process',  label: 'İşlem',     icon: 'square-outline',  provider: 'Ionicons' },
@@ -440,6 +515,10 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
                   { key: 'flow_data',     label: 'Veri',      icon: 'card-outline',    provider: 'Ionicons' },
                   { key: 'note',          label: 'Not',      icon: 'file-text',       provider: 'Feather' },
                   { key: 'ai',            label: 'AI ile Oluştur', icon: 'zap',       provider: 'Feather' },
+                ]
+              : isTimeline
+              ? [
+                  { key: 'ai', label: 'AI ile Oluştur', icon: 'zap', provider: 'Feather' },
                 ]
               : [
                   { key: 'task', label: 'Görev', icon: 'check-square', provider: 'Feather' },
@@ -473,13 +552,15 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
       )}
 
       {/* ── FAB ── */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.accent }]}
-        onPress={() => setTypeMenuVisible(!typeMenuVisible)}
-        activeOpacity={0.85}
-      >
-        <Feather name={typeMenuVisible ? "x" : "plus"} size={30} color={colors.accentText} />
-      </TouchableOpacity>
+      {!isKanban && !isTimeline && (
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.accent }]}
+          onPress={() => setTypeMenuVisible(!typeMenuVisible)}
+          activeOpacity={0.85}
+        >
+          <Feather name={typeMenuVisible ? "x" : "plus"} size={30} color={colors.accentText} />
+        </TouchableOpacity>
+      )}
 
       {/* ── Add Dialog ── */}
       <AddNodeDialog
@@ -516,8 +597,20 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
                 <Feather name="zap" size={22} color={colors.accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.aiModalTitle, { color: colors.textPrimary }]}>AI ile Tasarla</Text>
-                <Text style={[styles.aiModalSubtitle, { color: colors.textSecondary }]}>Süreci yapay zeka ile otomatikleştirin</Text>
+                <Text style={[styles.aiModalTitle, { color: colors.textPrimary }]}>
+                  {isTimeline ? 'Zaman Çizelgesi Oluştur'
+                    : isMindmap ? 'Zihin Haritası Oluştur'
+                    : isKanban  ? 'Kanban Panosu Oluştur'
+                    : isFlowchart ? 'Akış Şeması Oluştur'
+                    : 'AI ile Tasarla'}
+                </Text>
+                <Text style={[styles.aiModalSubtitle, { color: colors.textSecondary }]}>
+                  {isTimeline ? 'Proje görevleri ve tarihlerini AI ile oluşturun'
+                    : isMindmap ? 'Zihin haritası düğümlerini AI ile yapılandırın'
+                    : isKanban  ? 'Kanban görevlerini AI ile sütunlara dağıtın'
+                    : isFlowchart ? 'Akış şeması adımlarını AI ile tasarlayın'
+                    : 'Süreci yapay zeka ile otomatikleştirin'}
+                </Text>
               </View>
               <TouchableOpacity onPress={() => setAiModalVisible(false)} style={styles.aiCloseBtn}>
                 <Feather name="x" size={20} color={colors.textSecondary} />
@@ -527,7 +620,13 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
             <View style={[styles.aiInputContainer, { backgroundColor: isDark ? '#252538' : '#F8F9FA', borderColor: colors.border }]}>
               <TextInput
                 style={[styles.aiInput, { color: colors.textPrimary }]}
-                placeholder="Nasıl bir akış hayal ediyorsunuz? (Örn: Müşteri destek süreci)"
+                placeholder={
+                  isTimeline  ? 'Örn: Q3 2026 ürün lansmanı planı, pazarlama ve geliştirme görevleriyle'
+                  : isMindmap ? 'Örn: Proje yönetimi konusu için ana dallar ve alt konular'
+                  : isKanban  ? 'Örn: Yazılım geliştirme sprint süreci'
+                  : isFlowchart ? 'Örn: Müşteri destek süreci, onay adımları dahil'
+                  : 'Nasıl bir akış hayal ediyorsunuz?'
+                }
                 placeholderTextColor={colors.textMuted}
                 multiline
                 value={aiPrompt}
@@ -549,7 +648,13 @@ const BoardScreen: React.FC<Props> = ({ route, navigation }: Props) => {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={[styles.aiSubmitText, { color: '#FFF' }]}>Süreci Oluştur</Text>
+                  <Text style={[styles.aiSubmitText, { color: '#FFF' }]}>
+                    {isTimeline ? 'Görevleri Oluştur'
+                      : isMindmap ? 'Haritayı Oluştur'
+                      : isKanban  ? 'Panoyu Oluştur'
+                      : isFlowchart ? 'Akışı Oluştur'
+                      : 'Süreci Oluştur'}
+                  </Text>
                   <Feather name="arrow-right" size={18} color="#FFF" />
                 </View>
               )}

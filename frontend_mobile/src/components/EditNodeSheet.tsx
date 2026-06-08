@@ -23,7 +23,7 @@ interface EditNodeSheetProps {
   boardId?: string;
   teamId?: string;
   onClose: () => void;
-  onSave: (nodeId: string, updates: { title: string; content: string; color: string; assignee?: string; status?: TaskStatus }) => void;
+  onSave: (nodeId: string, updates: { title: string; content: string; color: string; assignee?: string; status?: TaskStatus; startDate?: string; endDate?: string; progress?: number }) => void;
   onDelete: (nodeId: string) => void;
 }
 
@@ -45,9 +45,14 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
   const [status, setStatus]         = useState<TaskStatus>('todo');
   const [selectedColor, setSelectedColor] = useState('');
   const [assigneePickerVisible, setAssigneePickerVisible] = useState(false);
+  const [startDate, setStartDate]   = useState('');
+  const [endDate, setEndDate]       = useState('');
+  const [progress, setProgress]     = useState('');
 
-  const palette = isDark ? ACCENT_COLORS_DARK : ACCENT_COLORS_LIGHT;
-  const isTask  = node?.type === 'task';
+  const palette   = isDark ? ACCENT_COLORS_DARK : ACCENT_COLORS_LIGHT;
+  const isTask    = node?.type === 'task';
+  const isMindmap = node?.type.startsWith('mindmap_') ?? false;
+  const isTimeline = !!(node?.data?.startDate || node?.data?.endDate);
 
   /* Node değişince formu doldur */
   React.useEffect(() => {
@@ -57,6 +62,9 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
       setAssignee(node.data.assignee || '');
       setStatus((node.data.status as TaskStatus) || 'todo');
       setSelectedColor(node.data.color || '');
+      setStartDate(node.data.startDate || '');
+      setEndDate(node.data.endDate || '');
+      setProgress(node.data.progress !== undefined ? String(node.data.progress) : '');
     }
   }, [node]);
 
@@ -66,8 +74,11 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
       title:    title.trim(),
       content:  content.trim(),
       color:    selectedColor || palette[0],
-      assignee: isTask ? assignee.trim() : undefined,
-      status:   isTask ? status : undefined,
+      assignee: isTask && !isTimeline ? assignee.trim() : undefined,
+      status:   isTask && !isTimeline ? status : undefined,
+      startDate: isTimeline ? (startDate || undefined) : undefined,
+      endDate:   isTimeline ? (endDate   || undefined) : undefined,
+      progress:  isTimeline ? (parseInt(progress, 10) || 0) : undefined,
     });
     onClose();
   };
@@ -108,12 +119,14 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
               <View style={[styles.typeIconBadge, { backgroundColor: `${colors.accent}15` }]}>
                 {isTask ? (
                   <Feather name="check-square" size={20} color={colors.accent} />
+                ) : isMindmap ? (
+                  <Feather name="git-branch" size={20} color={colors.accent} />
                 ) : (
                   <Feather name="file-text" size={20} color={colors.accent} />
                 )}
               </View>
               <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-                {isTask ? 'Görevi Düzenle' : 'Notu Düzenle'}
+                {isTask ? 'Görevi Düzenle' : isMindmap ? 'Konuyu Düzenle' : 'Notu Düzenle'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -140,25 +153,69 @@ const EditNodeSheet: React.FC<EditNodeSheetProps> = ({ visible, node, boardId = 
               autoFocus
             />
 
-            {/* İçerik */}
-            <Text style={[styles.label, { color: colors.textSecondary }]}>İçerik</Text>
-            <TextInput
-              style={[styles.input, styles.textArea, {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
-                color: colors.textPrimary,
-                borderColor: colors.border,
-              }]}
-              placeholder="İçerik..."
-              placeholderTextColor={colors.textMuted}
-              value={content}
-              onChangeText={setContent}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+            {/* İçerik — mindmap ve timeline dışında göster */}
+            {!isMindmap && !isTimeline && (
+              <>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>İçerik</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea, {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
+                    color: colors.textPrimary,
+                    borderColor: colors.border,
+                  }]}
+                  placeholder="İçerik..."
+                  placeholderTextColor={colors.textMuted}
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </>
+            )}
 
-            {/* Görev alanları */}
-            {isTask && (
+            {/* Timeline tarih + ilerleme alanları */}
+            {isTimeline && (
+              <>
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Başlangıç</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', color: colors.textPrimary, borderColor: colors.border }]}
+                      value={startDate}
+                      onChangeText={setStartDate}
+                      placeholder="YYYY-AA-GG"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numbers-and-punctuation"
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Bitiş</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', color: colors.textPrimary, borderColor: colors.border }]}
+                      value={endDate}
+                      onChangeText={setEndDate}
+                      placeholder="YYYY-AA-GG"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numbers-and-punctuation"
+                    />
+                  </View>
+                </View>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>İlerleme (0-100)</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', color: colors.textPrimary, borderColor: colors.border }]}
+                  value={progress}
+                  onChangeText={setProgress}
+                  placeholder="0"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                />
+              </>
+            )}
+
+            {/* Görev alanları — timeline dışında */}
+            {isTask && !isTimeline && (
               <>
                 {/* Durum Seçici */}
                 <Text style={[styles.label, { color: colors.textSecondary }]}>Durum</Text>

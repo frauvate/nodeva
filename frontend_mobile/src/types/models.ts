@@ -6,6 +6,9 @@ export interface NodeData {
   color: string;
   assignee?: string;
   status?: TaskStatus;
+  startDate?: string;  // "YYYY-MM-DD"
+  endDate?: string;    // "YYYY-MM-DD"
+  progress?: number;   // 0-100
 }
 
 export interface Position {

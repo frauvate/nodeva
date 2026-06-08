@@ -1,4 +1,16 @@
 print("\n[!!!] BACKEND PROCESS STARTING...")
+import socket
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+print(f"[!!!] LOCAL IP ADDRESS: {get_local_ip()}")
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -40,9 +52,11 @@ from routes.auth import router as auth_router
 from routes.teams import router as teams_router
 from routes.notifications import router as notifications_router
 from routes.users import router as users_router
+from routes.folders import router as folders_router
 
 app.include_router(auth_router)
 app.include_router(boards_router)
 app.include_router(teams_router)
 app.include_router(notifications_router)
 app.include_router(users_router)
+app.include_router(folders_router)

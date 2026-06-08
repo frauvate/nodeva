@@ -217,4 +217,81 @@
 .board-list li.active .sidebar-delete-btn:hover {
     background: rgba(255, 255, 255, 0.2) !important;
     color: #fff !important;
+}
+
+/* ── Folder Integration Styles ────────────────────────────── */
+.folder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  color: var(--text-primary);
+}
+
+.folder-row:hover {
+  background: var(--accent-gradient-soft);
+  border-color: var(--glass-border-subtle);
+}
+
+.folder-row.open {
+  font-weight: 600;
+  background: var(--accent-gradient-soft);
+  border-color: var(--glass-border-subtle);
+}
+
+.folder-row-drop-target {
+  border: 2px dashed var(--accent-primary) !important;
+  background: var(--accent-gradient-soft) !important;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.folder-board-indent {
+  padding-left: 16px;
+  border-left: 2px solid var(--glass-border-subtle);
+  margin-left: 18px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.folder-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+  transition: transform 0.15s ease;
+}
+
+.folder-color-dot:hover {
+  transform: scale(1.25);
+}
+
+.folder-color-picker {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  position: absolute;
+  top: 30px;
+  left: 12px;
+  z-index: 100;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: var(--glass-shadow-raised);
+}
+
+.add-folder-btn-nav {
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.add-folder-btn-nav:hover {
+  transform: scale(1.15);
+  color: var(--accent-secondary) !important;
 }

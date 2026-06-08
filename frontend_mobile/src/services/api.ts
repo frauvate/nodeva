@@ -76,4 +76,19 @@ export const userAPI = {
     shareBoard: (boardId: string, email: string) => api.post('/users/share-board', { board_id: boardId, email }).then((r) => r.data),
 };
 
+export const folderAPI = {
+    getFolders: () => api.get('/folders/').then((r) => r.data),
+    createFolder: (name: string, color?: string) =>
+        api.post('/folders/', { name, color }).then((r) => r.data),
+    updateFolder: (id: string, data: any) =>
+        api.put(`/folders/${id}`, data).then((r) => r.data),
+    deleteFolder: (id: string) => api.delete(`/folders/${id}`).then((r) => r.data),
+    addBoardToFolder: (folderId: string, boardId: string) =>
+        api.post(`/folders/${folderId}/boards/${boardId}`).then((r) => r.data),
+    removeBoardFromFolder: (folderId: string, boardId: string) =>
+        api.delete(`/folders/${folderId}/boards/${boardId}`).then((r) => r.data),
+    getTeamFolder: (teamId: string) =>
+        api.get(`/folders/team/${teamId}`).then((r) => r.data),
+};
+
 export default api;

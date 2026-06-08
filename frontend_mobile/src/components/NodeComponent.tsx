@@ -16,7 +16,7 @@ interface Props {
 }
 
 /* ─── Tip meta ─── */
-const TYPE_META: Record<string, { icon: string; label: string; accent: string; accentDark: string; shape?: 'capsule' | 'diamond' | 'parallelogram' | 'rect' }> = {
+const TYPE_META: Record<string, { icon: string; label: string; accent: string; accentDark: string; shape?: 'capsule' | 'diamond' | 'parallelogram' | 'rect' | 'cloud' }> = {
   task:          { icon: 'check-circle', label: 'GÖREV',      accent: '#22c55e', accentDark: '#4ade80' },
   note:          { icon: 'file-text',    label: 'NOT',        accent: '#10b981', accentDark: '#34d399' },
   flow_start:    { icon: 'play',         label: 'Başlangıç', accent: '#3b82f6', accentDark: '#60a5fa', shape: 'capsule' },
@@ -24,11 +24,23 @@ const TYPE_META: Record<string, { icon: string; label: string; accent: string; a
   flow_process:  { icon: 'activity',     label: 'İşlem',     accent: '#f59e0b', accentDark: '#fbbf24', shape: 'rect' },
   flow_decision: { icon: 'help-circle',  label: 'Karar',     accent: '#ef4444', accentDark: '#f87171', shape: 'diamond' },
   flow_data:     { icon: 'database',     label: 'Veri',      accent: '#06b6d4', accentDark: '#22d3ee', shape: 'parallelogram' },
+  mindmap_root:  { icon: 'target',       label: 'MERKEZ',     accent: '#ec4899', accentDark: '#f472b6', shape: 'cloud' },
+  mindmap_main:  { icon: 'git-branch',   label: 'ANA BAŞLIK', accent: '#3b82f6', accentDark: '#60a5fa', shape: 'cloud' },
+  mindmap_sub:   { icon: 'corner-down-right', label: 'ALT BAŞLIK', accent: '#06b6d4', accentDark: '#22d3ee', shape: 'cloud' },
 };
 
 const fallbackMeta = (type: string) => ({
   icon: 'map-pin', label: type || 'Düğüm', accent: '#6b7280', accentDark: '#9ca3af',
 });
+
+export function getNodeSize(type: string) {
+  if (type === 'mindmap_root') return { w: 200, h: 80 };
+  if (type === 'mindmap_main') return { w: 180, h: 70 };
+  if (type === 'mindmap_sub') return { w: 150, h: 50 };
+  if (type === 'flow_decision') return { w: 140, h: 140 };
+  if (type === 'flow_data') return { w: 160, h: 120 };
+  return { w: 200, h: 160 }; // Default size
+}
 
 /* ─── Durum meta ─── */
 const STATUS_META: Record<TaskStatus, { label: string; color: string; bgColor: string }> = {
@@ -75,6 +87,24 @@ const getInitials = (name?: string) => {
   return name.substring(0, 2).toUpperCase();
 };
 
+const resolveColor = (color: string, isDark: boolean) => {
+  if (!color) return undefined;
+  if (color.startsWith('var(--node-')) {
+    const name = color.substring(11, color.length - 1); // e.g. "blue"
+    const map: Record<string, { light: string, dark: string }> = {
+      blue:   { light: '#6366f1', dark: '#818cf8' },
+      green:  { light: '#10b981', dark: '#34d399' },
+      yellow: { light: '#f59e0b', dark: '#fbbf24' },
+      pink:   { light: '#ec4899', dark: '#f472b6' },
+      purple: { light: '#8b5cf6', dark: '#a78bfa' },
+      orange: { light: '#fb923c', dark: '#ff9f43' },
+    };
+    const resolved = map[name];
+    if (resolved) return isDark ? resolved.dark : resolved.light;
+  }
+  return color;
+};
+
 const stringToColor = (str: string) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -91,14 +121,17 @@ const NodeComponent: React.FC<Props> = ({ node, onDelete, onEdit, onPress, style
   const accentColor = isDark ? meta.accentDark : meta.accent;
   const isTask      = node.type === 'task';
   const isFlow      = node.type.startsWith('flow_');
+  const isMindmap   = node.type.startsWith('mindmap_');
   const statusMeta  = isTask && node.data.status ? STATUS_META[node.data.status as TaskStatus] : null;
 
   // Reverted to transparent card background with colored border
   const cardBg = colors.surfaceStrong;
-  const customColor = node.data.color || accentColor;
+  const customColor = resolveColor(node.data.color, isDark) || accentColor;
   
   const borderStyle = isFlow
     ? { borderTopColor: customColor, borderTopWidth: 3, borderLeftWidth: 1, borderLeftColor: colors.border }
+    : isMindmap
+    ? { borderColor: customColor, borderWidth: 2 }
     : { borderLeftColor: customColor, borderLeftWidth: 4 };
 
   const isDone = isTask && node.data.status === 'done';
@@ -107,10 +140,14 @@ const NodeComponent: React.FC<Props> = ({ node, onDelete, onEdit, onPress, style
   const isDiamond = meta.shape === 'diamond';
   const isParallelogram = meta.shape === 'parallelogram';
 
+  const { w, h } = getNodeSize(node.type);
+
   const cardStyle: ViewStyle = {
     backgroundColor: cardBg,
     borderColor: colors.border,
     ...borderStyle,
+    width: compact ? w : undefined,
+    height: compact ? h : undefined,
   };
 
   if (compact) {
@@ -119,6 +156,31 @@ const NodeComponent: React.FC<Props> = ({ node, onDelete, onEdit, onPress, style
       cardStyle.justifyContent = 'center';
       cardStyle.alignItems = 'center';
       cardStyle.paddingHorizontal = 24;
+    } else if (node.type === 'mindmap_root') {
+      cardStyle.borderRadius = 40;
+      cardStyle.borderStyle = 'dashed';
+      cardStyle.justifyContent = 'center';
+      cardStyle.alignItems = 'center';
+      cardStyle.paddingHorizontal = 16;
+      cardStyle.backgroundColor = customColor;
+      cardStyle.borderWidth = 0;
+    } else if (node.type === 'mindmap_main') {
+      cardStyle.borderRadius = 24;
+      cardStyle.justifyContent = 'center';
+      cardStyle.alignItems = 'center';
+      cardStyle.paddingHorizontal = 12;
+      cardStyle.backgroundColor = customColor;
+      cardStyle.borderWidth = 0;
+    } else if (node.type === 'mindmap_sub') {
+      cardStyle.backgroundColor = 'transparent';
+      cardStyle.borderWidth = 0;
+      cardStyle.borderBottomWidth = 2;
+      cardStyle.borderBottomColor = customColor;
+      cardStyle.borderRadius = 0;
+      cardStyle.justifyContent = 'center';
+      cardStyle.alignItems = 'center';
+      cardStyle.paddingHorizontal = 8;
+      cardStyle.paddingVertical = 4;
     }
   }
 
@@ -134,12 +196,12 @@ const NodeComponent: React.FC<Props> = ({ node, onDelete, onEdit, onPress, style
           style,
         ]}
       >
-        <View style={isDiamond && compact ? styles.diamondInner : (isParallelogram && compact ? styles.parallelogramInner : (isCapsule && compact ? styles.capsuleInner : null))}>
+        <View style={isDiamond && compact ? styles.diamondInner : (isParallelogram && compact ? styles.parallelogramInner : ((isCapsule || isMindmap) && compact ? styles.capsuleInner : null))}>
 
         {/* ── Header ── */}
-        <View style={[styles.header, compact && styles.headerCompact, (isCapsule || isDiamond || isParallelogram) && compact && { marginBottom: 4, width: '100%' }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, paddingRight: (isCapsule || isDiamond || isParallelogram) ? 24 : 0 }}>
-            {!isFlow && (
+        <View style={[styles.header, compact && styles.headerCompact, (isCapsule || isDiamond || isParallelogram || isMindmap) && compact && { marginBottom: 4, width: '100%' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, paddingRight: (isCapsule || isDiamond || isParallelogram || isMindmap) ? 24 : 0 }}>
+            {!isFlow && !isMindmap && (
               <View style={[styles.typeBadge, { backgroundColor: isDark ? `${accentColor}15` : '#e6f4ea' }]}>
                 <Text style={[styles.typeLabel, { color: accentColor }]} numberOfLines={1}>{meta.label}</Text>
               </View>
@@ -162,13 +224,13 @@ const NodeComponent: React.FC<Props> = ({ node, onDelete, onEdit, onPress, style
             )}
           </View>
 
-          <View style={[styles.headerRight, compact && (isCapsule || isDiamond || isParallelogram) && { position: 'absolute', top: 0, right: 0 }]}>
+          <View style={[styles.headerRight, compact && (isCapsule || isDiamond || isParallelogram || isMindmap) && { position: 'absolute', top: 0, right: 0 }]}>
             <TouchableOpacity
               onPress={() => onDelete(node.id)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={styles.deleteBtn}
             >
-              <Feather name="x" size={14} color={colors.textSecondary} />
+              <Feather name="x" size={14} color={(compact && (node.type === 'mindmap_root' || node.type === 'mindmap_main')) ? '#FFFFFF' : colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -178,9 +240,9 @@ const NodeComponent: React.FC<Props> = ({ node, onDelete, onEdit, onPress, style
           style={[
             styles.title, 
             compact && styles.titleCompact, 
-            { color: isDone ? colors.textSecondary : colors.textPrimary },
+            { color: (compact && (node.type === 'mindmap_root' || node.type === 'mindmap_main')) ? '#FFFFFF' : (isDone ? colors.textSecondary : colors.textPrimary) },
             isDone && { textDecorationLine: 'line-through' },
-            compact && (isCapsule || isDiamond) && { textAlign: 'center', width: '100%' }
+            compact && (isCapsule || isDiamond || isMindmap) && { textAlign: 'center', width: '100%' }
           ]} 
           numberOfLines={compact ? 2 : 2}
         >

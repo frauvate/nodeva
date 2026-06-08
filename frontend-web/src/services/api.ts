@@ -50,4 +50,14 @@ export const userAPI = {
     getBoardMembers: (boardId: string) => api.get(`/users/members/${boardId}`).then(res => res.data),
 };
 
+export const folderAPI = {
+    getFolders: () => api.get('/folders/').then(res => res.data),
+    createFolder: (name: string, color?: string) => api.post('/folders/', { name, color }).then(res => res.data),
+    updateFolder: (id: string, data: { name?: string; color?: string; board_ids?: string[] }) => api.put(`/folders/${id}`, data).then(res => res.data),
+    deleteFolder: (id: string) => api.delete(`/folders/${id}`).then(res => res.data),
+    addBoardToFolder: (folderId: string, boardId: string) => api.post(`/folders/${folderId}/boards/${boardId}`).then(res => res.data),
+    removeBoardFromFolder: (folderId: string, boardId: string) => api.delete(`/folders/${folderId}/boards/${boardId}`).then(res => res.data),
+    getTeamFolder: (teamId: string) => api.get(`/folders/team/${teamId}`).then(res => res.data),
+};
+
 export default api;

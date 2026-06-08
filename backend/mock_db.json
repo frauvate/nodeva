@@ -591,165 +591,6 @@
       "id": "6a0248d46413c5111a28c2fd"
     },
     {
-      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
-      "team_id": null,
-      "title": "flowchart test",
-      "nodes": [
-        {
-          "id": "9a5d0312-0687-4525-b7a7-7df90f804bd4",
-          "type": "flow_start",
-          "position": {
-            "x": 100,
-            "y": 250
-          },
-          "data": {
-            "title": "Başlangıç",
-            "content": "",
-            "color": "var(--node-blue)",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        },
-        {
-          "id": "4799dfca-0ff4-497e-980c-806b2e042bd7",
-          "type": "flow_process",
-          "position": {
-            "x": 350,
-            "y": 250
-          },
-          "data": {
-            "title": "Süreci Başlat",
-            "content": "Verileri al",
-            "color": "var(--node-pink)",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        },
-        {
-          "id": "2addd3ab-9e05-4117-bb06-1c4b1d4dc65d",
-          "type": "flow_decision",
-          "position": {
-            "x": 648,
-            "y": 251.60000610351562
-          },
-          "data": {
-            "title": "Karar?",
-            "content": "Koşul sağlandı mı?",
-            "color": "var(--node-purple)",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        },
-        {
-          "id": "b0d21331-130a-4f30-ab00-217c2de33eaf",
-          "type": "flow_process",
-          "position": {
-            "x": 850,
-            "y": 150
-          },
-          "data": {
-            "title": "Evet İşlemi",
-            "content": "Koşul doğru.",
-            "color": "var(--node-green)",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        },
-        {
-          "id": "bf60fd3a-4d11-4df6-b6f3-0fcc6c34ebdd",
-          "type": "flow_process",
-          "position": {
-            "x": 850,
-            "y": 350
-          },
-          "data": {
-            "title": "Hayır İşlemi",
-            "content": "Koşul yanlış.",
-            "color": "var(--node-yellow)",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        },
-        {
-          "id": "0dc40ea4-bd5f-4225-bb60-1f4c8bc71e47",
-          "type": "flow_end",
-          "position": {
-            "x": 1161.5999755859375,
-            "y": 150
-          },
-          "data": {
-            "title": "Bitiş",
-            "content": "",
-            "color": "var(--node-blue)",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        },
-        {
-          "id": "5im65g0cm",
-          "type": "flow_data",
-          "position": {
-            "x": 1160.53340657552,
-            "y": 348.53340657552
-          },
-          "data": {
-            "title": "giris",
-            "content": "",
-            "color": "#6366f1",
-            "assignee": "",
-            "assignee_name": "",
-            "status": null
-          }
-        }
-      ],
-      "edges": [
-        {
-          "id": "73e5ad19-6529-4ebc-b5b6-713e74988d61",
-          "source": "9a5d0312-0687-4525-b7a7-7df90f804bd4",
-          "target": "4799dfca-0ff4-497e-980c-806b2e042bd7",
-          "sourceHandle": "right",
-          "targetHandle": "left"
-        },
-        {
-          "id": "4a38f29a-f43f-4ec2-bf92-0827ca120447",
-          "source": "4799dfca-0ff4-497e-980c-806b2e042bd7",
-          "target": "2addd3ab-9e05-4117-bb06-1c4b1d4dc65d",
-          "sourceHandle": "right",
-          "targetHandle": "left"
-        },
-        {
-          "id": "4addac51-4f01-4f18-81d1-27f14a4be128",
-          "source": "2addd3ab-9e05-4117-bb06-1c4b1d4dc65d",
-          "target": "b0d21331-130a-4f30-ab00-217c2de33eaf",
-          "sourceHandle": "top",
-          "targetHandle": "left"
-        },
-        {
-          "id": "23c2d8c1-1abc-4a99-9342-cc97d9c1f5c6",
-          "source": "2addd3ab-9e05-4117-bb06-1c4b1d4dc65d",
-          "target": "bf60fd3a-4d11-4df6-b6f3-0fcc6c34ebdd",
-          "sourceHandle": "bottom",
-          "targetHandle": "left"
-        },
-        {
-          "id": "9642f818-782a-446c-abde-857e5ceada12",
-          "source": "b0d21331-130a-4f30-ab00-217c2de33eaf",
-          "target": "0dc40ea4-bd5f-4225-bb60-1f4c8bc71e47",
-          "sourceHandle": "right",
-          "targetHandle": "left"
-        }
-      ],
-      "created_at": "2026-05-13T09:22:16.660949",
-      "updated_at": "2026-06-08T16:49:41.217942",
-      "id": "6a0442c8875471fe70154b62"
-    },
-    {
       "user_id": "50e058af-ff3d-48eb-b39e-9d0c24d9e8f3",
       "team_id": null,
       "title": "My Flow",
@@ -1302,10 +1143,11 @@
           "data": {
             "title": "Merkez Konu",
             "content": "",
-            "color": "var(--node-blue)",
-            "assignee": "",
+            "color": "#ef4444",
             "assignee_name": "",
-            "status": null
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -1321,7 +1163,10 @@
             "color": "var(--node-purple)",
             "assignee": "",
             "assignee_name": "",
-            "status": null
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -1334,10 +1179,11 @@
           "data": {
             "title": "Alt Başlık",
             "content": "",
-            "color": "var(--node-yellow)",
-            "assignee": "",
+            "color": "#10b981",
             "assignee_name": "",
-            "status": null
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -1353,7 +1199,10 @@
             "color": "var(--node-green)",
             "assignee": "",
             "assignee_name": "",
-            "status": null
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         }
       ],
@@ -1374,7 +1223,7 @@
         }
       ],
       "created_at": "2026-06-08T16:57:34.678661",
-      "updated_at": "2026-06-08T17:03:19.517782",
+      "updated_at": "2026-06-08T18:00:54.613069",
       "id": "6a26f47ec1d79baf6a42bbe3"
     },
     {
@@ -1395,7 +1244,11 @@
             "content": "Açıklama girin...",
             "color": "var(--node-blue)",
             "assignee": "",
-            "status": "todo"
+            "assignee_name": "",
+            "status": "todo",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -1410,13 +1263,32 @@
             "content": "Açıklama girin...",
             "color": "var(--node-green)",
             "assignee": "",
-            "status": "in_progress"
+            "assignee_name": "",
+            "status": "in_progress",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
+          }
+        },
+        {
+          "id": "8263f151-a927-4114-b769-e32fa31d98e9",
+          "type": "task",
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "data": {
+            "title": "Yeni Görev",
+            "content": "Açıklama girin...",
+            "color": "var(--node-blue)",
+            "assignee": "",
+            "status": "done"
           }
         }
       ],
       "edges": [],
       "created_at": "2026-06-08T17:08:41.421164",
-      "updated_at": "2026-06-08T17:08:59.836195",
+      "updated_at": "2026-06-08T17:48:36.414570",
       "id": "6a26f719c1d79baf6a42bbe4"
     },
     {
@@ -1440,15 +1312,81 @@
             "assignee_name": "",
             "status": null,
             "startDate": "2026-06-08",
-            "endDate": "2026-06-12",
-            "progress": 37
+            "endDate": "2026-06-14",
+            "progress": 56
           }
         }
       ],
       "edges": [],
       "created_at": "2026-06-08T17:18:52.286147",
-      "updated_at": "2026-06-08T17:35:48.588693",
+      "updated_at": "2026-06-08T18:39:26.785445",
       "id": "6a26f97cc1d79baf6a42bbe5"
+    },
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "team_id": null,
+      "title": "mobil mindmap",
+      "template": "mindmap",
+      "nodes": [
+        {
+          "id": "1i62i4hww",
+          "type": "mindmap_root",
+          "position": {
+            "x": -43.33333333333336,
+            "y": 307.00000000000006
+          },
+          "data": {
+            "title": "ana konu",
+            "content": "",
+            "color": "#6366f1"
+          }
+        },
+        {
+          "id": "pyo1ey1z2",
+          "type": "mindmap_main",
+          "position": {
+            "x": 158.66666666666666,
+            "y": 89
+          },
+          "data": {
+            "title": "ana baslik",
+            "content": "",
+            "color": "#6366f1"
+          }
+        },
+        {
+          "id": "jwmi54pdk",
+          "type": "mindmap_sub",
+          "position": {
+            "x": 385.33333333333337,
+            "y": 289.3333333333333
+          },
+          "data": {
+            "title": "alt baslik",
+            "content": "",
+            "color": "#6366f1"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "hiir2nrr6",
+          "source": "1i62i4hww",
+          "sourceHandle": "right",
+          "target": "pyo1ey1z2",
+          "targetHandle": "left"
+        },
+        {
+          "id": "x943caq2u",
+          "source": "pyo1ey1z2",
+          "sourceHandle": "right",
+          "target": "jwmi54pdk",
+          "targetHandle": "left"
+        }
+      ],
+      "created_at": "2026-06-08T17:55:13.291203",
+      "updated_at": "2026-06-08T17:55:55.692347",
+      "id": "6a270201bf292a127a835b16"
     }
   ],
   "teams": [
@@ -1521,6 +1459,62 @@
       "read": false,
       "created_at": "2026-06-08T16:50:29.928741",
       "id": "6a26f2d6c1d79baf6a42bbe2"
+    }
+  ],
+  "folders": [
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "name": "test",
+      "color": null,
+      "board_ids": [
+        "69f353d668c6fb916fd41df0"
+      ],
+      "is_team_folder": true,
+      "team_id": "7ab0d558-95e2-46e3-a969-165964b6c1a8",
+      "created_at": "2026-06-08T19:26:26.629936",
+      "updated_at": "2026-06-08T19:26:26.629936",
+      "id": "6a2717622772c62c354317af"
+    },
+    {
+      "user_id": "9df39bd3-e3de-41a0-9371-a7c4f323de9a",
+      "name": "yeni ekip",
+      "color": null,
+      "board_ids": [],
+      "is_team_folder": true,
+      "team_id": "92c392e4-6969-424d-bcd1-0ebebff718be",
+      "created_at": "2026-06-08T19:26:26.959458",
+      "updated_at": "2026-06-08T19:26:26.959458",
+      "id": "6a2717622772c62c354317b0"
+    },
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "name": "ai panolar",
+      "color": null,
+      "board_ids": [
+        "69f34ded68c6fb916fd41def",
+        "69fe21118db5c82a10810b9b",
+        "6a0611ac9fc4febac1a0b2ed"
+      ],
+      "is_team_folder": false,
+      "team_id": null,
+      "created_at": "2026-06-08T19:26:47.695425",
+      "updated_at": "2026-06-08T19:27:10.337620",
+      "id": "6a2717772772c62c354317b1"
+    },
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "name": "test panolari",
+      "color": null,
+      "board_ids": [
+        "6a0613f21ad90f35dd78bd00",
+        "6a26f47ec1d79baf6a42bbe3",
+        "6a26f97cc1d79baf6a42bbe5"
+      ],
+      "is_team_folder": false,
+      "team_id": null,
+      "created_at": "2026-06-08T19:27:17.383093",
+      "updated_at": "2026-06-08T19:27:31.214928",
+      "id": "6a2717952772c62c354317b2"
     }
   ]
 }

@@ -161,10 +161,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [snapTarget, setSnapTarget] = useState<{ node: Node; handle: string } | null>(null);
 
-    // Inline-edit state
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editDraft, setEditDraft] = useState<Partial<NodeData>>({});
-
     // Property panel state
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [boardTemplate, setBoardTemplate] = useState<string>('basic');
@@ -633,33 +629,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
         }
     };
 
-    /* ─────────── Inline editing ─────────── */
-    const startEdit = (e: React.MouseEvent, node: Node) => {
-        e.stopPropagation();
-        if (connecting) return;
-        setEditingId(node.id);
-        setEditDraft({ ...node.data });
-    };
-
-    const commitEdit = () => {
-        if (!editingId) return;
-        
-        const node = nodes.find(n => n.id === editingId);
-        if (node && (node.data.title !== editDraft.title || node.data.content !== editDraft.content || node.data.assignee !== editDraft.assignee)) {
-            pushHistory({ nodes, edges });
-        }
-        
-        const newNodes = nodes.map(n =>
-            n.id === editingId ? { ...n, data: { ...n.data, ...editDraft } } : n
-        );
-        setNodes(newNodes);
-        saveBoard(newNodes, edges);
-        setEditingId(null);
-        setEditDraft({});
-    };
-
-    const cancelEdit = () => { setEditingId(null); setEditDraft({}); };
-
     const renderEdges = () => edges.map(edge => {
         const src = nodes.find(n => n.id === edge.source);
         const tgt = nodes.find(n => n.id === edge.target);
@@ -724,7 +693,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
 
     /* ─────────── Node renderer ─────────── */
     const renderNode = (node: Node) => {
-        const isEditing = editingId === node.id;
         const isTask = node.type === 'task';
         const isFlowStart = node.type === 'flow_start';
         const isFlowEnd = node.type === 'flow_end';
@@ -820,7 +788,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                     })
                 }}
                 onPointerDown={(e) => handlePointerDown(e, node.id)}
-                onDoubleClick={(e) => startEdit(e, node)}
             >
                 {(isFlowDecision || isFlowData) && (
                     <div className="shape-bg" style={{
@@ -867,62 +834,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                 </div>
 
                 {/* ── Body ── */}
-                {isEditing ? (
-                    <div 
-                        onPointerDown={e => e.stopPropagation()} 
-                        onDoubleClick={e => e.stopPropagation()}
-                        style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
-                    >
-                        <input
-                            autoFocus
-                            value={editDraft.title ?? ''}
-                            onChange={e => {
-                                const val = e.target.value;
-                                setEditDraft(d => ({ ...d, title: val }));
-                            }}
-                            placeholder="Başlık"
-                            style={inputStyle}
-                        />
-                        {!isSpecialShape && (
-                            <>
-                                <textarea
-                                    value={editDraft.content ?? ''}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setEditDraft(d => ({ ...d, content: val }));
-                                    }}
-                                    placeholder="İçerik"
-                                    rows={3}
-                                    style={{ ...inputStyle, resize: 'vertical' }}
-                                />
-                                {isTask && (
-                                    <input
-                                        value={editDraft.assignee ?? ''}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            setEditDraft(d => ({ ...d, assignee: val }));
-                                        }}
-                                        placeholder="👤 Atanan kişi"
-                                        style={inputStyle}
-                                    />
-                                )}
-                            </>
-                        )}
-                        <div style={{ display: 'flex', gap: 6 }}>
-                            <button onClick={commitEdit} style={saveBtnStyle}>Kaydet</button>
-                            <button onClick={cancelEdit} style={cancelBtnStyle}>İptal</button>
-                        </div>
-                    </div>
-                ) : (
-                    <div>
-                        <div className="node-title" style={{
-                            fontWeight: 600,
-                            marginBottom: isSpecialShape ? 0 : 6,
-                            fontSize: isSpecialShape ? '1.05rem' : '0.95rem',
-                            textAlign: isSpecialShape ? 'center' : 'left',
-                            color: 'var(--text-primary)',
-                            lineHeight: 1.35,
-                        }}>
                             {node.data?.title || '(Başlık yok)'}
                         </div>
                         {!isSpecialShape && (
@@ -967,20 +878,10 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                 </div>
                             );
                         })()}
-                        {!isSpecialShape && (
-                            <div style={{
-                                fontSize: '0.68rem',
-                                color: 'var(--text-muted)',
-                                marginTop: 8,
-                                opacity: 0.7,
-                            }}>Düzenlemek için çift tıkla</div>
-                        )}
-                    </div>
-                )}
                 </div>
 
                 {/* ── Connection handles ── */}
-                {!isEditing && (() => {
+                {(() => {
                     const handleOffsetsForNode: Record<string, { cx: number; cy: number }> = {
                         top: { cx: nodeWidth / 2, cy: 0 },
                         right: { cx: nodeWidth, cy: nodeMinHeight / 2 },
@@ -1248,7 +1149,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                             key={node.id} 
                                             className={`gantt-task-row${isSelected ? ' selected' : ''}`}
                                             onClick={() => setSelectedNodeId(node.id)}
-                                            onDoubleClick={(e) => startEdit(e, node)}
                                         >
                                             <div className="gantt-task-row-name-col">
                                                 <span className="gantt-task-bullet" style={{ backgroundColor: node.data.color || 'var(--node-blue)' }} />
@@ -1767,7 +1667,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                                 draggable
                                                 onDragStart={e => handleKanbanDragStart(e, node.id)}
                                                 onClick={() => setSelectedNodeId(node.id)}
-                                                onDoubleClick={(e) => startEdit(e, node)}
                                                 className={`kanban-card glass-panel${isSelected ? ' selected' : ''}`}
                                             >
                                                 {/* Left color bar */}

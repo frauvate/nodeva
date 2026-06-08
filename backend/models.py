@@ -105,3 +105,28 @@ class Board(BaseModel):
         populate_by_name = True
         json_encoders = {ObjectId: str}
 
+
+class Folder(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    color: Optional[str] = None        # ön plan rengi (CSS var adı veya hex)
+    board_ids: List[str] = []          # klasördeki pano ID'leri
+    is_team_folder: bool = False       # True ise team_id'ye bağlı otomatik klasör
+    team_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+class FolderCreate(BaseModel):
+    name: str
+    color: Optional[str] = None
+
+class FolderUpdate(BaseModel):
+    name: Optional[str] = None
+    color: Optional[str] = None
+    board_ids: Optional[List[str]] = None
+

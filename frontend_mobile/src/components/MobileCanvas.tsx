@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { NodeItem, Position, EdgeItem } from '../types/models';
 import DraggableNode from './DraggableNode';
+import NodeComponent, { getNodeSize } from './NodeComponent';
 import { useTheme } from '../context/ThemeContext';
 import Svg, { Defs, Marker, Path, G } from 'react-native-svg';
 
@@ -17,19 +18,16 @@ interface Props {
   onEdgeDelete?: (edgeId: string) => void;
 }
 
-const NODE_W = 200;
-const NODE_H = 160;
-
-const HANDLE_OFFSETS: Record<string, { cx: number; cy: number }> = {
-  top:    { cx: NODE_W / 2, cy: 0 },
-  right:  { cx: NODE_W,     cy: NODE_H / 2 },
-  bottom: { cx: NODE_W / 2, cy: NODE_H },
-  left:   { cx: 0,          cy: NODE_H / 2 },
-};
-
 function getHandlePos(node: NodeItem, handle: string | null | undefined) {
   const raw  = (handle || 'right').split('-').pop() || 'right';
-  const off  = HANDLE_OFFSETS[raw] || HANDLE_OFFSETS.right;
+  const { w, h } = getNodeSize(node.type);
+  const offsets: Record<string, { cx: number; cy: number }> = {
+    top:    { cx: w / 2, cy: 0 },
+    right:  { cx: w,     cy: h / 2 },
+    bottom: { cx: w / 2, cy: h },
+    left:   { cx: 0,     cy: h / 2 },
+  };
+  const off  = offsets[raw] || offsets.right;
   const nx   = Number(node.position?.x) || 0;
   const ny   = Number(node.position?.y) || 0;
   return { x: nx + off.cx, y: ny + off.cy };

@@ -9,6 +9,7 @@ import { Swipeable, RectButton } from 'react-native-gesture-handler';
 import { useBoardStore } from '../store/useBoardStore';
 import { useTeamStore } from '../store/useTeamStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useFolderStore } from '../store/useFolderStore';
 import { userAPI } from '../services/api';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -38,21 +39,21 @@ const MOBILE_TEMPLATES = [
     title: 'Zihin Haritası',
     desc: 'Fikirlerinizi görselleştirin, beyin fırtınası yapın ve yapılandırın.',
     icon: 'aperture',
-    available: false,
+    available: true,
   },
   {
     id: 'kanban',
     title: 'Kanban Panosu',
     desc: 'Projelerinizi ve görevlerinizi sütunlar halinde organize edin.',
     icon: 'trello',
-    available: false,
+    available: true,
   },
   {
     id: 'timeline',
     title: 'Zaman Çizelgesi',
     desc: 'Kilometre taşları ve proje planları için zaman eksenli takip.',
-    icon: 'clock',
-    available: false,
+    icon: 'calendar',
+    available: true,
   },
 ];
 
@@ -72,6 +73,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { teams, fetchTeams, createTeam, inviteMember, deleteTeam, updateTeam } = useTeamStore();
   const { user, updateProfile } = useAuthStore();
   const { colors, isDark } = useTheme();
+  
+  const { folders, fetchFolders, createFolder, updateFolder, deleteFolder, addBoardToFolder, removeBoardFromFolder } = useFolderStore();
   
   const [isModalVisible, setIsModalVisible]       = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -93,14 +96,49 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
   const [templateToCreate, setTemplateToCreate] = useState<string | null>(null);
 
+  // Folders state
+  const [isCreateFolderVisible, setIsCreateFolderVisible] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isEditFolderVisible, setIsEditFolderVisible] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<any>(null);
+  const [editFolderName, setEditFolderName] = useState('');
+  const [isMoveModalVisible, setIsMoveModalVisible] = useState(false);
+  const [movingBoard, setMovingBoard] = useState<any>(null);
+  const [openFolderIds, setOpenFolderIds] = useState<string[]>([]);
+
+  const FOLDER_COLORS = [
+    colors.accent,
+    '#1d4ed8',
+    '#15803d',
+    '#a16207',
+    '#be185d',
+    '#c2410c',
+  ];
+
+  const toggleFolder = (folderId: string) => {
+    setOpenFolderIds(prev => 
+      prev.includes(folderId) ? prev.filter(id => id !== folderId) : [...prev, folderId]
+    );
+  };
+
   useEffect(() => { 
     fetchBoards(); 
     fetchTeams();
-  }, [fetchBoards, fetchTeams]);
+    fetchFolders();
+  }, [fetchBoards, fetchTeams, fetchFolders]);
 
   const isFlowBoard = (item: Board) =>
     item.template === 'flowchart' ||
     (item.nodes || []).some(n => FLOW_TYPES.includes(n.type));
+
+  const getBoardTemplate = (item: Board) => {
+    if (item.template) return item.template;
+    if ((item.nodes || []).some(n => FLOW_TYPES.includes(n.type))) return 'flowchart';
+    if ((item.nodes || []).some(n => n.type.startsWith('mindmap_'))) return 'mindmap';
+    // Timeline: nodes with startDate/endDate fields
+    if ((item.nodes || []).some(n => n.data?.startDate || n.data?.endDate)) return 'timeline';
+    return 'basic';
+  };
 
   const displayedBoards = boards
     .filter((b) => {
@@ -229,7 +267,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const renderBoardItem = ({ item }: { item: Board }) => {
-    const flow = isFlowBoard(item);
+    const template = getBoardTemplate(item);
+    const isFlow = template === 'flowchart';
+    const isMind = template === 'mindmap';
+    const isKanban = template === 'kanban';
+    const isTimeline = template === 'timeline';
 
     const renderRightActions = (progress: any, dragX: any) => {
       return (
@@ -282,12 +324,12 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       >
         <TouchableOpacity
           style={[styles.boardCard, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: colors.border }]}
-          onPress={() => navigation.navigate('Board', { boardId: item.id, template: flow ? 'flowchart' : 'basic' })}
+          onPress={() => navigation.navigate('Board', { boardId: item.id, template: template })}
           activeOpacity={0.7}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={[styles.iconBox, { backgroundColor: flow ? `${colors.accent}15` : '#6b728015' }]}>
-              <Feather name={flow ? 'git-merge' : 'list'} size={24} color={flow ? colors.accent : colors.textSecondary} />
+            <View style={[styles.iconBox, { backgroundColor: (isFlow || isMind || isKanban || isTimeline) ? `${colors.accent}15` : '#6b728015' }]}>
+              <Feather name={isFlow ? 'git-merge' : isMind ? 'aperture' : isKanban ? 'columns' : isTimeline ? 'calendar' : 'list'} size={24} color={(isFlow || isMind || isKanban || isTimeline) ? colors.accent : colors.textSecondary} />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -295,9 +337,100 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 {item.pinned && <Ionicons name="pin" size={12} color={colors.accent} />}
               </View>
               <Text style={[styles.boardMeta, { color: colors.textSecondary }]}>
-                {flow ? 'Akış Şeması' : 'Temel İş Akışı'} · {item.nodes?.length || 0} öğe
+                {isFlow ? 'Akış Şeması' : isMind ? 'Zihin Haritası' : isKanban ? 'Kanban Panosu' : isTimeline ? 'Zaman Çizelgesi' : 'Temel İş Akışı'} · {item.nodes?.length || 0} öğe
               </Text>
             </View>
+            <Feather name="chevron-right" size={18} color={colors.border} />
+          </View>
+        </TouchableOpacity>
+      </Swipeable>
+    );
+  };
+
+  const renderBoardItemWithFolderActions = (item: Board) => {
+    const template = getBoardTemplate(item);
+    const isFlow = template === 'flowchart';
+    const isMind = template === 'mindmap';
+    const isKanban = template === 'kanban';
+    const isTimeline = template === 'timeline';
+
+    const renderRightActions = (progress: any, dragX: any) => {
+      return (
+        <View style={styles.rightActions}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: '#4b5563' }]}
+            onPress={() => {
+              setEditingBoard(item);
+              setIsEditModalVisible(true);
+            }}
+          >
+            <Feather name="edit-2" size={20} color="#FFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: '#ef4444' }]}
+            onPress={() => {
+              Alert.alert('Sil', 'Bu panoyu silmek istediğinize emin misiniz?', [
+                { text: 'İptal', style: 'cancel' },
+                { text: 'Sil', style: 'destructive', onPress: () => deleteBoard(item.id) },
+              ]);
+            }}
+          >
+            <Feather name="trash-2" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      );
+    };
+
+    const renderLeftActions = (progress: any, dragX: any) => {
+      return (
+        <TouchableOpacity
+          style={[styles.leftActions, { backgroundColor: item.pinned ? '#6b7280' : '#f59e0b' }]}
+          onPress={() => togglePin(item.id)}
+        >
+          <Ionicons name="pin" size={20} color="#FFF" />
+          <Text style={{ color: '#FFF', fontSize: 12, fontWeight: '700', marginTop: 4 }}>
+            {item.pinned ? 'Kaldır' : 'Sabitle'}
+          </Text>
+        </TouchableOpacity>
+      );
+    };
+
+    return (
+      <Swipeable
+        key={item.id}
+        renderRightActions={renderRightActions}
+        renderLeftActions={renderLeftActions}
+        friction={2}
+        rightThreshold={40}
+        leftThreshold={40}
+      >
+        <TouchableOpacity
+          style={[styles.boardCard, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: colors.border, marginHorizontal: 16, marginBottom: 10 }]}
+          onPress={() => navigation.navigate('Board', { boardId: item.id, template: template })}
+          activeOpacity={0.7}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={[styles.iconBox, { backgroundColor: (isFlow || isMind || isKanban || isTimeline) ? `${colors.accent}15` : '#6b728015' }]}>
+              <Feather name={isFlow ? 'git-merge' : isMind ? 'aperture' : isKanban ? 'columns' : isTimeline ? 'calendar' : 'list'} size={24} color={(isFlow || isMind || isKanban || isTimeline) ? colors.accent : colors.textSecondary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.boardTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+                {item.pinned && <Ionicons name="pin" size={12} color={colors.accent} />}
+              </View>
+              <Text style={[styles.boardMeta, { color: colors.textSecondary }]}>
+                {isFlow ? 'Akış Şeması' : isMind ? 'Zihin Haritası' : isKanban ? 'Kanban Panosu' : isTimeline ? 'Zaman Çizelgesi' : 'Temel İş Akışı'} · {item.nodes?.length || 0} öğe
+              </Text>
+            </View>
+            {/* Folder Move Button */}
+            {!item.team_id && (
+              <TouchableOpacity 
+                onPress={() => { setMovingBoard(item); setIsMoveModalVisible(true); }}
+                style={{ padding: 6 }}
+              >
+                <Feather name="more-horizontal" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
             <Feather name="chevron-right" size={18} color={colors.border} />
           </View>
         </TouchableOpacity>
@@ -458,32 +591,274 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           )}
         />
       ) : (
-        <FlatList
-          data={displayedBoards}
-          keyExtractor={(item) => item.id}
-          renderItem={renderBoardItem}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={() => (
-            <View style={{ alignItems: 'center', marginTop: 100, paddingHorizontal: 32 }}>
-              <Feather name="inbox" size={40} color={colors.textSecondary} style={{ marginBottom: 16 }} />
-              <Text style={{ color: colors.textSecondary, textAlign: 'center', lineHeight: 22 }}>
-                Bu kategoride henüz pano yok.{'\n'}Sağ alttaki + butonuna basarak oluşturabilirsin.
-              </Text>
+        <ScrollView contentContainerStyle={[styles.listContent, { paddingBottom: 120 }]}>
+          {/* Kişisel Klasörler */}
+          {folders.filter(f => !f.is_team_folder).map(folder => {
+            const isExpanded = openFolderIds.includes(folder.id);
+            const folderBoards = boards.filter(b => !b.team_id && (folder.board_ids || []).includes(b.id));
+            return (
+              <View key={folder.id} style={{ marginBottom: 8 }}>
+                {/* Klasör Başlığı */}
+                <TouchableOpacity
+                  style={[{
+                    flexDirection: 'row', alignItems: 'center', padding: 14,
+                    borderRadius: 14, marginBottom: 4,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    borderWidth: folder.color ? 1.5 : 1,
+                    borderColor: folder.color ? folder.color + '60' : colors.border,
+                  }]}
+                  onPress={() => toggleFolder(folder.id)}
+                  onLongPress={() => {
+                    setEditingFolder(folder);
+                    setEditFolderName(folder.name);
+                    setIsEditFolderVisible(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[{
+                    width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12,
+                    backgroundColor: folder.color ? folder.color + '20' : colors.accentSoft,
+                  }]}>
+                    <Feather name="folder" size={18} color={isExpanded ? (folder.color || colors.accent) : colors.textSecondary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '700', fontSize: 15 }}>{folder.name}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 1 }}>{folderBoards.length} pano</Text>
+                  </View>
+                  <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                {/* Klasör İçindeki Panolar */}
+                {isExpanded && folderBoards.map(board => (
+                  <View key={board.id} style={{ paddingLeft: 16, borderLeftWidth: 2, borderLeftColor: folder.color ? folder.color + '50' : colors.accentSoft, marginLeft: 18, marginBottom: 6 }}>
+                    {renderBoardItemWithFolderActions(board)}
+                  </View>
+                ))}
+                {isExpanded && folderBoards.length === 0 && (
+                  <View style={{ paddingLeft: 36, paddingVertical: 10 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 13 }}>Klasör boş.</Text>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
+          {/* Klasörsüz Kişisel Panolar */}
+          {(() => {
+            const folderBoardIds = new Set(folders.filter(f => !f.is_team_folder).flatMap(f => f.board_ids || []));
+            const unfoldered = boards.filter(b => !b.team_id && !folderBoardIds.has(b.id));
+            if (unfoldered.length === 0 && folders.filter(f => !f.is_team_folder).length === 0) {
+              return (
+                <View style={{ alignItems: 'center', marginTop: 60, paddingHorizontal: 32 }}>
+                  <Feather name="inbox" size={40} color={colors.textSecondary} style={{ marginBottom: 16 }} />
+                  <Text style={{ color: colors.textSecondary, textAlign: 'center', lineHeight: 22 }}>
+                    Henüz pano yok.{'\n'}Sağ alttaki + butonuna basarak oluşturabilirsin.
+                  </Text>
+                </View>
+              );
+            }
+            return unfoldered.map(board => renderBoardItemWithFolderActions(board));
+          })()}
+
+          {/* Ekip Klasörleri */}
+          {folders.filter(f => f.is_team_folder).length > 0 && (
+            <View style={{ marginTop: 20, marginBottom: 8, paddingHorizontal: 4 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.7 }}>Ekip Klasörleri</Text>
             </View>
           )}
-        />
+          {folders.filter(f => f.is_team_folder).map(folder => {
+            const isExpanded = openFolderIds.includes(folder.id);
+            const folderBoards = boards.filter(b => (folder.board_ids || []).includes(b.id));
+            return (
+              <View key={folder.id} style={{ marginBottom: 8 }}>
+                <TouchableOpacity
+                  style={[{
+                    flexDirection: 'row', alignItems: 'center', padding: 14,
+                    borderRadius: 14, marginBottom: 4,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    borderWidth: 1.5,
+                    borderColor: colors.accent + '40',
+                  }]}
+                  onPress={() => toggleFolder(folder.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: colors.accentSoft }]}>
+                    <Feather name="folder" size={18} color={isExpanded ? colors.accent : colors.textSecondary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '700', fontSize: 15 }}>{folder.name}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 1 }}>{folderBoards.length} ekip panosu</Text>
+                  </View>
+                  <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+                {isExpanded && folderBoards.map(board => (
+                  <View key={board.id} style={{ paddingLeft: 16, borderLeftWidth: 2, borderLeftColor: colors.accentSoft, marginLeft: 18, marginBottom: 6 }}>
+                    {renderBoardItemWithFolderActions(board)}
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+
+          {/* Yeni Klasör Butonu */}
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 14, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, marginTop: 12 }}
+            onPress={() => setIsCreateFolderVisible(true)}
+          >
+            <Feather name="folder-plus" size={18} color={colors.textMuted} />
+            <Text style={{ color: colors.textMuted, fontSize: 14 }}>Yeni Klasör Oluştur</Text>
+          </TouchableOpacity>
+        </ScrollView>
       )}
 
       {/* FAB */}
       {activeTab !== 'profile' && (
         <TouchableOpacity
           style={[styles.fab, { backgroundColor: colors.accent }]}
-          onPress={() => activeTab === 'teams' ? setIsCreateTeamVisible(true) : setIsModalVisible(true)}
+          onPress={() => {
+            if (activeTab === 'teams') return setIsCreateTeamVisible(true);
+            setIsModalVisible(true);
+          }}
           activeOpacity={0.8}
         >
           <Text style={[styles.fabText, { color: isDark ? '#000' : '#FFF' }]}>+</Text>
         </TouchableOpacity>
       )}
+
+      {/* Create Folder Modal */}
+      <Modal visible={isCreateFolderVisible} transparent animationType="slide" onRequestClose={() => setIsCreateFolderVisible(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: isDark ? '#1c1c28' : '#FFF' }]}>
+            <View style={styles.handleBar}><View style={[styles.handle, { backgroundColor: colors.border }]} /></View>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Yeni Klasör</Text>
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: isDark ? '#2C2C2C' : '#F5F5F5' }]}
+              placeholder="Klasör adı..."
+              placeholderTextColor={colors.textSecondary}
+              value={newFolderName}
+              onChangeText={setNewFolderName}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setIsCreateFolderVisible(false); setNewFolderName(''); }}>
+                <Text style={{ color: colors.textSecondary }}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createBtn, { backgroundColor: colors.accent }]}
+                onPress={async () => {
+                  if (!newFolderName.trim()) return;
+                  await createFolder(newFolderName.trim());
+                  setNewFolderName('');
+                  setIsCreateFolderVisible(false);
+                }}
+              >
+                <Text style={{ color: isDark ? '#000' : '#FFF', fontWeight: '700' }}>Oluştur</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Edit Folder Modal */}
+      <Modal visible={isEditFolderVisible} transparent animationType="fade" onRequestClose={() => setIsEditFolderVisible(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: isDark ? '#1c1c28' : '#FFF' }]}>
+            <View style={styles.handleBar}><View style={[styles.handle, { backgroundColor: colors.border }]} /></View>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Klasörü Düzenle</Text>
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: isDark ? '#2C2C2C' : '#F5F5F5' }]}
+              value={editFolderName}
+              onChangeText={setEditFolderName}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { flex: 1 }]}
+                onPress={() => {
+                  Alert.alert('Klasörü Sil', 'Klasör silinecek. Panolar silinmez.', [
+                    { text: 'İptal', style: 'cancel' },
+                    { text: 'Sil', style: 'destructive', onPress: async () => {
+                      if (editingFolder) {
+                        await deleteFolder(editingFolder.id);
+                        setIsEditFolderVisible(false);
+                      }
+                    }},
+                  ]);
+                }}
+              >
+                <Text style={{ color: colors.error, fontWeight: '600' }}>Sil</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createBtn, { backgroundColor: colors.accent }]}
+                onPress={async () => {
+                  if (editingFolder && editFolderName.trim()) {
+                    await updateFolder(editingFolder.id, { name: editFolderName.trim() });
+                    setIsEditFolderVisible(false);
+                  }
+                }}
+              >
+                <Text style={{ color: isDark ? '#000' : '#FFF', fontWeight: '700' }}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Move Board to Folder Modal */}
+      <Modal visible={isMoveModalVisible} transparent animationType="fade" onRequestClose={() => setIsMoveModalVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setIsMoveModalVisible(false)}>
+          <View style={[styles.modalContent, { backgroundColor: isDark ? '#1c1c28' : '#FFF', maxHeight: '60%' }]}>
+            <View style={styles.handleBar}><View style={[styles.handle, { backgroundColor: colors.border }]} /></View>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary, marginBottom: 16 }]}>Klasöre Taşı</Text>
+            <ScrollView>
+              {/* Klasörden Çıkar seçeneği */}
+              {folders.filter(f => !f.is_team_folder && movingBoard && (f.board_ids || []).includes(movingBoard.id)).map(f => (
+                <TouchableOpacity
+                  key={'remove-' + f.id}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, marginBottom: 8, backgroundColor: isDark ? '#2C2C2C' : '#F5F5F5' }}
+                  onPress={async () => {
+                    if (movingBoard) {
+                      await removeBoardFromFolder(f.id, movingBoard.id);
+                      setIsMoveModalVisible(false);
+                    }
+                  }}
+                >
+                  <Feather name="x-circle" size={20} color={colors.error} />
+                  <Text style={{ color: colors.error, fontWeight: '600' }}>"{f.name}" klasöründen çıkar</Text>
+                </TouchableOpacity>
+              ))}
+              {/* Klasörler listesi */}
+              {folders.filter(f => !f.is_team_folder && movingBoard && !(f.board_ids || []).includes(movingBoard.id)).map(folder => (
+                <TouchableOpacity
+                  key={folder.id}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, marginBottom: 8, backgroundColor: isDark ? '#2C2C2C' : '#F5F5F5' }}
+                  onPress={async () => {
+                    if (movingBoard) {
+                      await addBoardToFolder(folder.id, movingBoard.id);
+                      setIsMoveModalVisible(false);
+                    }
+                  }}
+                >
+                  <Feather name="folder" size={20} color={folder.color || colors.accent} />
+                  <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>{folder.name}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginLeft: 'auto' }}>{(folder.board_ids || []).length} pano</Text>
+                </TouchableOpacity>
+              ))}
+              {folders.filter(f => !f.is_team_folder).length === 0 && (
+                <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                  <Text style={{ color: colors.textMuted }}>Henüz klasör yok.</Text>
+                  <TouchableOpacity
+                    style={{ marginTop: 12, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: colors.accent, borderRadius: 10 }}
+                    onPress={() => { setIsMoveModalVisible(false); setIsCreateFolderVisible(true); }}
+                  >
+                    <Text style={{ color: '#FFF', fontWeight: '700' }}>Klasör Oluştur</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Create Team Modal */}
       <Modal visible={isCreateTeamVisible} transparent animationType="slide">
