@@ -1,0 +1,282 @@
+.templates-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.templates-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.templates-page-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.templates-page-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.templates-grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+}
+
+.template-view-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur-light);
+    -webkit-backdrop-filter: var(--glass-blur-light);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.template-view-card.available {
+    cursor: pointer;
+}
+
+.template-view-card.available:hover {
+    transform: translateY(-6px);
+    border-color: var(--accent-primary);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
+    background: var(--glass-bg-strong);
+}
+
+.template-view-card.coming-soon {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.template-view-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--accent-gradient-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.template-view-card.available:hover .template-view-icon-wrapper {
+    transform: scale(1.1) rotate(2deg);
+}
+
+.template-view-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.template-view-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 24px;
+    flex-grow: 1;
+}
+
+.template-view-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border-subtle);
+    color: var(--text-muted);
+}
+
+.template-view-btn {
+    align-self: stretch;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.template-view-card.available:hover .template-view-btn {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+/* ── Templates Modal Backdrop ──────────────────────────── */
+.templates-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 12, 41, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: backdrop-in 0.2s ease;
+}
+
+.templates-modal-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 32px;
+    border-radius: 24px;
+    animation: modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: var(--glass-shadow-raised);
+}
+
+.templates-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.templates-modal-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.templates-modal-close {
+    background: var(--accent-gradient-soft);
+    border: 1px solid var(--glass-border-subtle);
+    cursor: pointer;
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.templates-modal-close:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.templates-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.templates-modal-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.templates-modal-info strong {
+    color: var(--accent-primary);
+}
+
+.templates-form-group {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.templates-modal-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--glass-border-subtle);
+    border-radius: 14px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s ease;
+    background: var(--glass-bg);
+    color: var(--text-primary);
+}
+
+.templates-modal-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    background: var(--glass-bg-strong);
+}
+
+.templates-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.templates-btn-primary,
+.templates-btn-secondary {
+    padding: 10px 22px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.templates-btn-primary {
+    background: var(--accent-primary);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.25);
+}
+
+.templates-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.templates-btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.templates-btn-secondary {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border-subtle);
+    color: var(--text-secondary);
+}
+
+.templates-btn-secondary:hover {
+    background: var(--glass-bg-strong);
+    color: var(--text-primary);
+}

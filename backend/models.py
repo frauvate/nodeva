@@ -14,6 +14,9 @@ class NodeData(BaseModel):
     assignee: Optional[str] = ""          # e-posta adresi (geriye dönük uyumluluk)
     assignee_name: Optional[str] = ""     # görünen ad (e-postanın baş kısmı)
     status: Optional[str] = None          # todo | in_progress | done
+    startDate: Optional[str] = None
+    endDate: Optional[str] = None
+    progress: Optional[int] = None
 
 class Node(BaseModel):
     id: str

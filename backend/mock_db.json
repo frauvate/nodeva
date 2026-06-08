@@ -184,7 +184,7 @@
             "color": "#E8F5E9",
             "assignee": "",
             "assignee_name": "",
-            "status": null
+            "status": "done"
           }
         },
         {
@@ -244,7 +244,7 @@
         }
       ],
       "created_at": "2026-04-30T12:41:17.835616",
-      "updated_at": "2026-05-14T13:42:47.452430",
+      "updated_at": "2026-06-08T16:49:52.583701",
       "id": "69f34ded68c6fb916fd41def"
     },
     {
@@ -272,7 +272,7 @@
           "id": "0l2kytt3i",
           "type": "task",
           "position": {
-            "x": -417.4138848910279,
+            "x": -415.81384826993417,
             "y": 241.47590921251964
           },
           "data": {
@@ -437,7 +437,7 @@
         }
       ],
       "created_at": "2026-04-30T13:06:30.877303",
-      "updated_at": "2026-05-14T12:54:38.365277",
+      "updated_at": "2026-06-08T16:50:32.417129",
       "id": "69f353d668c6fb916fd41df0"
     },
     {
@@ -695,13 +695,16 @@
           "id": "5im65g0cm",
           "type": "flow_data",
           "position": {
-            "x": 1113.3333333333326,
-            "y": 353.3333333333325
+            "x": 1160.53340657552,
+            "y": 348.53340657552
           },
           "data": {
             "title": "giris",
             "content": "",
-            "color": "#6366f1"
+            "color": "#6366f1",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null
           }
         }
       ],
@@ -743,7 +746,7 @@
         }
       ],
       "created_at": "2026-05-13T09:22:16.660949",
-      "updated_at": "2026-05-14T18:09:53.952267",
+      "updated_at": "2026-06-08T16:49:41.217942",
       "id": "6a0442c8875471fe70154b62"
     },
     {
@@ -1040,7 +1043,50 @@
       "team_id": null,
       "title": "kredi başvurusu",
       "template": "flowchart",
-      "nodes": [],
+      "nodes": [
+        {
+          "id": "7ab97e7a-61ca-486b-bb39-879e1ddaa771",
+          "type": "flow_start",
+          "position": {
+            "x": 331.9999694824219,
+            "y": 200.5999755859375
+          },
+          "data": {
+            "title": "Başlangıç",
+            "content": "",
+            "color": "var(--node-blue)",
+            "assignee": ""
+          }
+        },
+        {
+          "id": "81418474-8d52-4b13-a0c7-0a3f656d0d7d",
+          "type": "note",
+          "position": {
+            "x": 395,
+            "y": 454
+          },
+          "data": {
+            "title": "Yeni Not",
+            "content": "İçerik...",
+            "color": "var(--node-green)",
+            "assignee": ""
+          }
+        },
+        {
+          "id": "5308b0e5-d365-42da-81c8-77f6d88989d5",
+          "type": "flow_process",
+          "position": {
+            "x": 667,
+            "y": 249
+          },
+          "data": {
+            "title": "İşlem",
+            "content": "",
+            "color": "var(--node-pink)",
+            "assignee": ""
+          }
+        }
+      ],
       "edges": [
         {
           "id": "e1",
@@ -1125,10 +1171,17 @@
           "target": "3",
           "sourceHandle": "right",
           "targetHandle": "left"
+        },
+        {
+          "id": "4cf1cde7-37b1-4e3d-b680-1860876db443",
+          "source": "7ab97e7a-61ca-486b-bb39-879e1ddaa771",
+          "sourceHandle": "right",
+          "target": "5308b0e5-d365-42da-81c8-77f6d88989d5",
+          "targetHandle": "left"
         }
       ],
       "created_at": "2026-05-14T18:26:58.755634",
-      "updated_at": "2026-05-14T18:36:53.837668",
+      "updated_at": "2026-06-08T16:50:15.623800",
       "id": "6a0613f21ad90f35dd78bd00"
     },
     {
@@ -1232,6 +1285,170 @@
       "created_at": "2026-05-14T19:20:23.759249",
       "updated_at": "2026-05-14T19:20:40.456707",
       "id": "6a062077f1666045975b1581"
+    },
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "team_id": null,
+      "title": "mindmap test",
+      "template": "mindmap",
+      "nodes": [
+        {
+          "id": "e7323ab1-7e49-439c-be1a-4647e04fb60a",
+          "type": "mindmap_root",
+          "position": {
+            "x": 671.2000122070312,
+            "y": 321.3999938964844
+          },
+          "data": {
+            "title": "Merkez Konu",
+            "content": "",
+            "color": "var(--node-blue)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null
+          }
+        },
+        {
+          "id": "15c3e0c8-7a03-422c-a4f0-e87edb25227e",
+          "type": "mindmap_main",
+          "position": {
+            "x": 988,
+            "y": 227
+          },
+          "data": {
+            "title": "Ana Başlık",
+            "content": "",
+            "color": "var(--node-purple)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null
+          }
+        },
+        {
+          "id": "aef3b478-3409-456d-922f-8fd6bec2fb48",
+          "type": "mindmap_sub",
+          "position": {
+            "x": 1000.800048828125,
+            "y": 420.6000061035156
+          },
+          "data": {
+            "title": "Alt Başlık",
+            "content": "",
+            "color": "var(--node-yellow)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null
+          }
+        },
+        {
+          "id": "fd171d99-adc5-46c1-a3b1-f7494dcea8fe",
+          "type": "note",
+          "position": {
+            "x": 399.9999694824219,
+            "y": 132
+          },
+          "data": {
+            "title": "Yeni Not",
+            "content": "İçerik...",
+            "color": "var(--node-green)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "cdf740f7-080f-4f95-b722-b97ea79da22c",
+          "source": "e7323ab1-7e49-439c-be1a-4647e04fb60a",
+          "target": "15c3e0c8-7a03-422c-a4f0-e87edb25227e",
+          "sourceHandle": "right",
+          "targetHandle": "left"
+        },
+        {
+          "id": "ac7edf22-914e-4478-b9f6-d494022fe5de",
+          "source": "15c3e0c8-7a03-422c-a4f0-e87edb25227e",
+          "target": "aef3b478-3409-456d-922f-8fd6bec2fb48",
+          "sourceHandle": "bottom",
+          "targetHandle": "top"
+        }
+      ],
+      "created_at": "2026-06-08T16:57:34.678661",
+      "updated_at": "2026-06-08T17:03:19.517782",
+      "id": "6a26f47ec1d79baf6a42bbe3"
+    },
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "team_id": null,
+      "title": "kanban",
+      "template": "kanban",
+      "nodes": [
+        {
+          "id": "e5056bb1-9d93-4b61-b1f0-330ce200de89",
+          "type": "task",
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "data": {
+            "title": "Yeni Görev",
+            "content": "Açıklama girin...",
+            "color": "var(--node-blue)",
+            "assignee": "",
+            "status": "todo"
+          }
+        },
+        {
+          "id": "5d407d84-1fb0-4562-8b43-731e9db289ad",
+          "type": "note",
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "data": {
+            "title": "Yeni Not",
+            "content": "Açıklama girin...",
+            "color": "var(--node-green)",
+            "assignee": "",
+            "status": "in_progress"
+          }
+        }
+      ],
+      "edges": [],
+      "created_at": "2026-06-08T17:08:41.421164",
+      "updated_at": "2026-06-08T17:08:59.836195",
+      "id": "6a26f719c1d79baf6a42bbe4"
+    },
+    {
+      "user_id": "434a8d1c-a4e1-47a8-a8c6-00116166aebb",
+      "team_id": null,
+      "title": "gantt",
+      "template": "timeline",
+      "nodes": [
+        {
+          "id": "cde658b3-5d33-4e87-ab43-96590a0b2650",
+          "type": "task",
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "data": {
+            "title": "Yeni Görev",
+            "content": "Açıklama girin...",
+            "color": "var(--node-blue)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": "2026-06-08",
+            "endDate": "2026-06-12",
+            "progress": 37
+          }
+        }
+      ],
+      "edges": [],
+      "created_at": "2026-06-08T17:18:52.286147",
+      "updated_at": "2026-06-08T17:35:48.588693",
+      "id": "6a26f97cc1d79baf6a42bbe5"
     }
   ],
   "teams": [
@@ -1292,6 +1509,18 @@
       "read": false,
       "created_at": "2026-05-14T19:19:37.452825",
       "id": "6a062049f1666045975b1580"
+    },
+    {
+      "recipient_email": "admin@gmail.com",
+      "type": "task_assigned",
+      "title": "Size bir görev atandı",
+      "body": "\"gorev\" görevi size atandı.",
+      "board_id": "69f353d668c6fb916fd41df0",
+      "node_id": "0l2kytt3i",
+      "assigner_email": "esmaasyldrm@gmail.com",
+      "read": false,
+      "created_at": "2026-06-08T16:50:29.928741",
+      "id": "6a26f2d6c1d79baf6a42bbe2"
     }
   ]
 }

@@ -6,6 +6,7 @@ import { CreateBoardModal, ConfirmModal } from '../components/Modal';
 import { ToastContainer, useToast } from '../components/Toast';
 import TeamsPanel from '../components/TeamsPanel';
 import NotificationBell from '../components/NotificationBell';
+import TemplatesView from '../components/TemplatesView';
 import { boardAPI, teamAPI } from '../services/api';
 import { supabase } from '../lib/supabase';
 import '../App.css';
@@ -18,6 +19,8 @@ const Dashboard: React.FC = () => {
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState('');
     const [ownedTeams, setOwnedTeams] = useState<any[]>([]);
+    const [currentView, setCurrentView] = useState<'board' | 'templates'>('board');
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     // Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -103,6 +106,7 @@ const Dashboard: React.FC = () => {
             setBoards(prev => [...prev, newBoard]);
             setActiveBoardId(newBoard.id);
             setActiveBoardTemplate(newBoard.template || template || 'basic');
+            setCurrentView('board');
             showToast(`"${title}" panosu oluşturuldu.`, 'success');
         } catch (error) {
             showToast('Pano oluşturulamadı. Lütfen tekrar deneyin.', 'error');
@@ -178,6 +182,10 @@ const Dashboard: React.FC = () => {
                     userId={userId}
                     theme={theme}
                     onToggleTheme={toggleTheme}
+                    currentView={currentView}
+                    onSelectView={(view) => setCurrentView(view as any)}
+                    isOpen={sidebarOpen}
+                    onToggleOpen={() => setSidebarOpen(!sidebarOpen)}
                 />
                 <div className="main-content">
                     {/* Teams floating icon — sağ üst */}
@@ -206,7 +214,12 @@ const Dashboard: React.FC = () => {
                             }}
                         />
                     </div>
-                    {activeBoardId ? (
+                    {currentView === 'templates' ? (
+                        <TemplatesView 
+                            ownedTeams={ownedTeams}
+                            onCreateBoard={handleCreateBoard}
+                        />
+                    ) : activeBoardId ? (
                         <>
                             <Canvas
                                 boardId={activeBoardId}
@@ -214,6 +227,7 @@ const Dashboard: React.FC = () => {
                                 showToast={showToast}
                                 currentUserEmail={userEmail}
                                 onInviteUser={handleInviteUser}
+                                sidebarOpen={sidebarOpen}
                             />
                             <Toolbar 
                                 boardId={activeBoardId} 
@@ -239,6 +253,10 @@ const Dashboard: React.FC = () => {
                     onConfirm={handleCreateBoard}
                     onClose={() => setShowCreateModal(false)}
                     ownedTeams={ownedTeams}
+                    onNavigateTemplates={() => {
+                        setCurrentView('templates');
+                        setShowCreateModal(false);
+                    }}
                 />
             )}
             {deleteTarget && (

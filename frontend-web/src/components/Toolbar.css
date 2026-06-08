@@ -191,3 +191,25 @@
 .icon-process { width: 20px; height: 14px; border-radius: 2px; background: var(--node-pink); }
 .icon-diamond { width: 14px; height: 14px; transform: rotate(45deg); background: var(--node-purple); margin: 2px; }
 .icon-parallelogram { width: 20px; height: 14px; transform: skewX(-20deg); background: var(--node-yellow); }
+
+/* Zihin Haritası İkonları */
+.icon-mindmap-root {
+    width: 20px;
+    height: 12px;
+    border-radius: 10px;
+    background: var(--node-blue);
+    border: 1.5px dashed var(--accent-primary) !important;
+}
+.icon-mindmap-main {
+    width: 18px;
+    height: 14px;
+    border-radius: 5px;
+    background: var(--node-purple);
+    border: 1.5px solid var(--accent-secondary) !important;
+}
+.icon-mindmap-sub {
+    width: 18px;
+    height: 4px;
+    background: transparent;
+    border-bottom: 2px solid var(--text-muted);
+}

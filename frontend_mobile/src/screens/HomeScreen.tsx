@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Modal, TextInput, KeyboardAvoidingView, Platform,
   Alert, ScrollView, Image, Pressable,
 } from 'react-native';
-// import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { Swipeable, RectButton } from 'react-native-gesture-handler';
 import { useBoardStore } from '../store/useBoardStore';
 import { useTeamStore } from '../store/useTeamStore';
@@ -21,8 +21,39 @@ type Props = StackScreenProps<RootStackParamList, 'Home'>;
 const FLOW_TYPES = ['flow_start', 'flow_end', 'flow_process', 'flow_decision', 'flow_data'];
 
 const TEMPLATES = [
-  { id: 'basic',     title: 'Temel İş Akışı', icon: 'list', desc: 'Görev ve not tabanlı standart pano' },
-  { id: 'flowchart', title: 'Akış Şeması',    icon: 'git-merge', desc: 'Karar ve süreç akışları için' },
+  { id: 'basic',         title: 'Temel İş Akışı', icon: 'list', desc: 'Görev ve not tabanlı standart pano' },
+  { id: 'templates_tab', title: 'Şablonlar',      icon: 'layers', desc: 'Hazır şablonları inceleyin' },
+];
+
+const MOBILE_TEMPLATES = [
+  {
+    id: 'flowchart',
+    title: 'Akış Şeması',
+    desc: 'Karar ve süreç akışları için elmas, kapsül ve süreç kartları.',
+    icon: 'git-merge',
+    available: true,
+  },
+  {
+    id: 'mindmap',
+    title: 'Zihin Haritası',
+    desc: 'Fikirlerinizi görselleştirin, beyin fırtınası yapın ve yapılandırın.',
+    icon: 'aperture',
+    available: false,
+  },
+  {
+    id: 'kanban',
+    title: 'Kanban Panosu',
+    desc: 'Projelerinizi ve görevlerinizi sütunlar halinde organize edin.',
+    icon: 'trello',
+    available: false,
+  },
+  {
+    id: 'timeline',
+    title: 'Zaman Çizelgesi',
+    desc: 'Kilometre taşları ve proje planları için zaman eksenli takip.',
+    icon: 'clock',
+    available: false,
+  },
 ];
 
 const PRESET_AVATARS = [
@@ -59,6 +90,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [editingTeam, setEditingTeam] = useState<any>(null);
   const [editTeamName, setEditTeamName] = useState('');
   const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
+  const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
+  const [templateToCreate, setTemplateToCreate] = useState<string | null>(null);
 
   useEffect(() => { 
     fetchBoards(); 
@@ -181,6 +214,17 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       setSelectedTemplate('basic');
       setIsModalVisible(false);
       navigation.navigate('Board', { boardId: createdBoard.id, template: createdBoard.template || selectedTemplate });
+    }
+  };
+
+  const handleCreateTemplateBoard = async () => {
+    if (!newBoardTitle.trim() || !templateToCreate || isLoading) return;
+    const createdBoard = await createBoard(newBoardTitle.trim(), templateToCreate);
+    if (createdBoard) {
+      setNewBoardTitle('');
+      setTemplateToCreate(null);
+      setIsTemplateModalVisible(false);
+      navigation.navigate('Board', { boardId: createdBoard.id, template: createdBoard.template || templateToCreate });
     }
   };
 
@@ -341,18 +385,63 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
       ) : activeTab === 'flow' ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-          <View style={[styles.iconBox, { width: 80, height: 80, borderRadius: 30, backgroundColor: `${colors.accent}15`, marginBottom: 20 }]}>
-            <Feather name="layers" size={40} color={colors.accent} />
+        <ScrollView contentContainerStyle={styles.listContent}>
+          <View style={styles.templatesHeader}>
+            <Text style={[styles.templatesMainTitle, { color: colors.textPrimary }]}>Şablonlar</Text>
+            <Text style={[styles.templatesSubtitle, { color: colors.textSecondary }]}>
+              Projelerinize hızlıca başlamak için bir şablon seçin.
+            </Text>
           </View>
-          <Text style={[styles.modalTitle, { color: colors.textPrimary, marginBottom: 8 }]}>Şablonlar</Text>
-          <Text style={{ color: colors.textSecondary, textAlign: 'center', lineHeight: 22 }}>
-            Yeni pano şablonları yakında burada olacak. Kendi şablonlarınızı oluşturup paylaşabileceksiniz.
-          </Text>
-          <View style={{ marginTop: 30, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
-            <Text style={{ color: colors.accent, fontWeight: '700' }}>Coming Soon</Text>
-          </View>
-        </View>
+
+          {MOBILE_TEMPLATES.map((item) => {
+            const isAvailable = item.available;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.templateListItem,
+                  {
+                    backgroundColor: isDark ? '#1E1E1E' : '#FFF',
+                    borderColor: colors.border,
+                    opacity: isAvailable ? 1 : 0.6,
+                  }
+                ]}
+                disabled={!isAvailable}
+                onPress={() => {
+                  setTemplateToCreate(item.id);
+                  setIsTemplateModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <View style={[
+                    styles.templateIconBox,
+                    { backgroundColor: isAvailable ? `${colors.accent}15` : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)') }
+                  ]}>
+                    <Feather
+                      name={item.icon as any}
+                      size={24}
+                      color={isAvailable ? colors.accent : colors.textSecondary}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.templateListTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+                    <Text style={[styles.templateListDesc, { color: colors.textSecondary }]}>{item.desc}</Text>
+                  </View>
+                  {isAvailable ? (
+                    <View style={[styles.templateUseBtn, { backgroundColor: colors.accent }]}>
+                      <Text style={[styles.templateUseBtnText, { color: isDark ? '#000' : '#FFF' }]}>Kullan</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.templateBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+                      <Text style={[styles.templateBadgeText, { color: colors.textSecondary }]}>Yakında</Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       ) : activeTab === 'teams' ? (
         <FlatList
           data={teams}
@@ -485,7 +574,14 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                         borderColor: isSelected ? colors.accent : colors.border,
                       },
                     ]}
-                    onPress={() => setSelectedTemplate(t.id)}
+                    onPress={() => {
+                      if (t.id === 'templates_tab') {
+                        setIsModalVisible(false);
+                        setActiveTab('flow');
+                      } else {
+                        setSelectedTemplate(t.id);
+                      }
+                    }}
                     activeOpacity={0.7}
                   >
                     <Feather name={t.icon as any} size={26} color={isSelected ? colors.accent : colors.textPrimary} style={{ marginBottom: 6 }} />
@@ -530,6 +626,70 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity
                 style={[styles.createBtn, { backgroundColor: colors.accent, opacity: isLoading || !newBoardTitle.trim() ? 0.6 : 1 }]}
                 onPress={handleCreateBoard}
+                disabled={isLoading || !newBoardTitle.trim()}
+              >
+                {isLoading
+                  ? <ActivityIndicator size="small" color={isDark ? '#000' : '#FFF'} />
+                  : <Text style={{ color: isDark ? '#000' : '#FFF', fontWeight: '700', fontSize: 15 }}>Oluştur</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            {Platform.OS === 'ios' && <View style={{ height: 16 }} />}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Template Create Board Modal */}
+      <Modal
+        visible={isTemplateModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => !isLoading && setIsTemplateModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalContent, { backgroundColor: isDark ? '#1c1c28' : '#FFF' }]}>
+            <View style={styles.handleBar}>
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              Yeni {templateToCreate === 'flowchart' ? 'Akış Şeması' : 'Pano'}
+            </Text>
+
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Pano Adı</Text>
+            <TextInput
+              style={[styles.input, {
+                color: colors.textPrimary,
+                borderColor: colors.border,
+                backgroundColor: isDark ? '#2C2C2C' : '#F5F5F5',
+              }]}
+              placeholder="Pano başlığı..."
+              placeholderTextColor={colors.textSecondary}
+              value={newBoardTitle}
+              onChangeText={setNewBoardTitle}
+              autoFocus
+              editable={!isLoading}
+              returnKeyType="done"
+              onSubmitEditing={handleCreateTemplateBoard}
+            />
+
+            {error && <Text style={{ color: '#FF5252', marginBottom: 12, fontSize: 13 }}>{error}</Text>}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => { setIsTemplateModalVisible(false); setNewBoardTitle(''); setTemplateToCreate(null); }}
+                disabled={isLoading}
+              >
+                <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createBtn, { backgroundColor: colors.accent, opacity: isLoading || !newBoardTitle.trim() ? 0.6 : 1 }]}
+                onPress={handleCreateTemplateBoard}
                 disabled={isLoading || !newBoardTitle.trim()}
               >
                 {isLoading
@@ -998,6 +1158,70 @@ const styles = StyleSheet.create({
   avatarLarge: {
     width: '100%',
     height: '100%',
+  },
+  templatesHeader: {
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  templatesMainTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  templatesSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  templateListItem: {
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  templateIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  templateListTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  templateListDesc: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  templateUseBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  templateUseBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  templateBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  templateBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
 

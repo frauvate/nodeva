@@ -20,6 +20,7 @@ export interface BoardMember {
     email: string;
     id: string;
     is_self?: boolean;
+    avatar_url?: string;
 }
 
 interface AssigneePickerProps {

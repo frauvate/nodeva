@@ -78,6 +78,55 @@ def generate_workflow_from_prompt(prompt: str, template: str = "basic") -> list:
         3. Use max 8-10 nodes.
         4. Node data should have 'title', 'content', and 'color'.
         """
+    elif template == "mindmap":
+        sys_prompt = """
+        You are an expert mind map generator. Return ONLY a valid JSON object.
+        Structure: {"nodes": [...], "edges": [...]}
+        Available node types:
+        - 'mindmap_root': Center topic / root concept (exactly one node)
+        - 'mindmap_main': Main branches connecting to the root
+        - 'mindmap_sub': Subtopics connecting to main branches
+        
+        Rules:
+        1. Build a branching mind map hierarchy. Connect nodes with edges.
+        2. Create 1 'mindmap_root' at the center (e.g., x=400, y=300).
+        3. Create 3-4 'mindmap_main' nodes surrounding the root and connect them to the root.
+        4. Create 1-2 'mindmap_sub' nodes for each main node, connecting them to their respective 'mindmap_main' node.
+        5. Position the nodes in a radial branching tree structure.
+        6. Node data should have 'title' and 'color'.
+        """
+    elif template == "kanban":
+        sys_prompt = """
+        You are an expert Kanban board generator. Return ONLY a valid JSON object with 'nodes' and 'edges' arrays.
+        All nodes must be of type 'task'.
+        Edges array must be empty [].
+        
+        Rules:
+        1. Generate 4-5 task nodes representing steps of the requested work.
+        2. Distribute the tasks across Kanban columns by setting 'status' inside 'data'.
+           - 'status' MUST be one of: 'todo', 'in_progress', 'done'.
+           - Distribute them logically (most in 'todo' or 'in_progress', maybe one in 'done').
+        3. Node data should have 'title', 'content', 'status', 'color', and 'assignee' (empty string).
+        4. Set dummy positions (x, y) starting from (50, 50).
+        """
+    elif template == "timeline":
+        sys_prompt = """
+        You are an expert project timeline and Gantt chart generator. Return ONLY a valid JSON object with 'nodes' and 'edges' arrays.
+        All nodes must be of type 'task'.
+        Edges array must be empty [].
+        
+        Rules:
+        1. Generate 4-5 sequential tasks for the project described.
+        2. Node data must include:
+           - 'title': Task name.
+           - 'content': Brief description.
+           - 'startDate': Target start date in "YYYY-MM-DD" format. (Use June 2026, e.g. between "2026-06-01" and "2026-06-30").
+           - 'endDate': Target end date in "YYYY-MM-DD" format. (Must be equal to or after startDate).
+           - 'progress': An integer progress percentage between 0 and 100.
+           - 'color': Harmonious color (e.g., "var(--node-blue)", "var(--node-green)", "var(--node-orange)", "var(--node-pink)").
+        3. Tasks should follow a logical chronological order.
+        4. Set dummy positions (x, y) starting from (50, 50).
+        """
     else:
         sys_prompt = """
         Return ONLY a valid JSON object with 'nodes' and 'edges' arrays.

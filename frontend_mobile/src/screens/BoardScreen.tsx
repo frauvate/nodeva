@@ -13,6 +13,7 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import { useBoardStore } from '../store/useBoardStore';
 import { StackScreenProps } from '@react-navigation/stack';

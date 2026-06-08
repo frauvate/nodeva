@@ -22,6 +22,12 @@ const BASIC_NODES = [
     { type: 'note', label: 'Not Ekle', icon: 'icon-note' }
 ];
 
+const MINDMAP_NODES = [
+    { type: 'mindmap_root', label: 'Merkez Konu', icon: 'icon-mindmap-root' },
+    { type: 'mindmap_main', label: 'Ana Başlık', icon: 'icon-mindmap-main' },
+    { type: 'mindmap_sub', label: 'Alt Başlık', icon: 'icon-mindmap-sub' }
+];
+
 const Toolbar: React.FC<ToolbarProps> = ({ boardId, boardTemplate = 'basic', onGenerate, showToast }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
@@ -86,17 +92,19 @@ const Toolbar: React.FC<ToolbarProps> = ({ boardId, boardTemplate = 'basic', onG
                         </div>
                     </div>
 
-                    <div className="menu-section" style={{ borderBottom: boardTemplate === 'flowchart' ? '1px solid var(--glass-border-subtle)' : 'none' }}>
-                        <div className="section-title">Temel Düğümler (Sürükle)</div>
-                        <div className="shape-grid basic-grid">
-                            {BASIC_NODES.filter(n => boardTemplate === 'basic' || n.type === 'note').map(n => (
-                                <div key={n.type} className="shape-item" draggable onDragStart={(e) => handleDragStart(e, n.type)} title={n.label}>
-                                    <div className={`shape-icon ${n.icon}`} />
-                                    <span className="shape-label">{n.label}</span>
-                                </div>
-                            ))}
+                    {boardTemplate !== 'timeline' && (
+                        <div className="menu-section" style={{ borderBottom: (boardTemplate === 'flowchart' || boardTemplate === 'mindmap') ? '1px solid var(--glass-border-subtle)' : 'none' }}>
+                            <div className="section-title">Temel Düğümler (Sürükle)</div>
+                            <div className="shape-grid basic-grid">
+                                {BASIC_NODES.filter(n => boardTemplate === 'basic' || n.type === 'note').map(n => (
+                                    <div key={n.type} className="shape-item" draggable onDragStart={(e) => handleDragStart(e, n.type)} title={n.label}>
+                                        <div className={`shape-icon ${n.icon}`} />
+                                        <span className="shape-label">{n.label}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {boardTemplate === 'flowchart' && (
                         <div className="menu-section" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
@@ -106,6 +114,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ boardId, boardTemplate = 'basic', onG
                                     <div key={s.type} className="shape-item" draggable onDragStart={(e) => handleDragStart(e, s.type)} title={s.label}>
                                         <div className={`shape-icon ${s.icon}`} />
                                         <span className="shape-label">{s.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {boardTemplate === 'mindmap' && (
+                        <div className="menu-section" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
+                            <div className="section-title">Zihin Haritası Şekilleri (Sürükle)</div>
+                            <div className="shape-grid">
+                                {MINDMAP_NODES.map(m => (
+                                    <div key={m.type} className="shape-item" draggable onDragStart={(e) => handleDragStart(e, m.type)} title={m.label}>
+                                        <div className={`shape-icon ${m.icon}`} />
+                                        <span className="shape-label">{m.label}</span>
                                     </div>
                                 ))}
                             </div>

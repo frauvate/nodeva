@@ -35,6 +35,7 @@ interface CreateBoardModalProps {
     onConfirm: (title: string, teamId?: string, template?: string) => void;
     onClose: () => void;
     ownedTeams?: { id: string; name: string }[];
+    onNavigateTemplates?: () => void;
 }
 
 const TEMPLATES = [
@@ -50,22 +51,22 @@ const TEMPLATES = [
         )
     },
     {
-        id: 'flowchart',
-        title: 'Akış Şeması (Flowchart)',
-        desc: 'Kapsül, elmas ve dikdörtgen şekillerle karar akışları.',
+        id: 'templates',
+        title: 'Şablonlar',
+        desc: 'Akış şeması ve diğer hazır şablonları keşfedin.',
         preview: (
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <div style={{ width: 30, height: 20, background: 'var(--node-blue)', borderRadius: 20, border: '1px solid var(--glass-border-subtle)' }} />
-                <div style={{ width: 12, height: 2, background: 'var(--text-muted)' }} />
-                <div style={{ width: 20, height: 20, background: 'var(--node-purple)', transform: 'rotate(45deg)', border: '1px solid var(--glass-border-subtle)' }} />
-                <div style={{ width: 12, height: 2, background: 'var(--text-muted)' }} />
-                <div style={{ width: 30, height: 20, background: 'var(--node-pink)', borderRadius: 4, border: '1px solid var(--glass-border-subtle)' }} />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-primary)' }}>
+                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                    <polyline points="2 17 12 22 22 17" />
+                    <polyline points="2 12 12 17 22 12" />
+                </svg>
             </div>
         )
     }
 ];
 
-export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, onClose, ownedTeams = [] }) => {
+export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, onClose, ownedTeams = [], onNavigateTemplates }) => {
     const [value, setValue] = useState('');
     const [teamId, setTeamId] = useState<string>('');
     const [selectedTemplate, setSelectedTemplate] = useState<string>('basic');
@@ -89,7 +90,13 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({ onConfirm, o
                         <div 
                             key={t.id} 
                             className={`template-card ${selectedTemplate === t.id ? 'selected' : ''}`}
-                            onClick={() => setSelectedTemplate(t.id)}
+                            onClick={() => {
+                                if (t.id === 'templates') {
+                                    onNavigateTemplates?.();
+                                } else {
+                                    setSelectedTemplate(t.id);
+                                }
+                            }}
                         >
                             <div className="template-preview">
                                 {t.preview}

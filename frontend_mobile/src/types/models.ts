@@ -38,4 +38,5 @@ export interface Board {
   edges: EdgeItem[];
   created_at?: string;
   updated_at?: string;
+  pinned?: boolean;
 }

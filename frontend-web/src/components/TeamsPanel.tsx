@@ -222,16 +222,20 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                             {/* Team List */}
                             {teams.length === 0 ? (
                                 <div className="teams-empty">
-                                    <span className="teams-empty-icon">🤝</span>
+                                    <span className="teams-empty-icon">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        </svg>
+                                    </span>
                                     <p>Henüz bir ekibiniz yok.</p>
                                     <small>Yukarıdan yeni bir ekip oluşturun.</small>
                                 </div>
                             ) : (
                                 <ul className="teams-list">
                                     {teams.map(team => {
-                                        const isOwner = team.owner_id === undefined
-                                            ? false
-                                            : true; // We check by comparing with currentUserEmail via members
                                         const expanded = expandedTeam === team.id;
                                         return (
                                             <li key={team.id} className={`teams-list-item ${expanded ? 'expanded' : ''}`}>
@@ -251,8 +255,26 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                                                             className="teams-icon-btn teams-icon-btn--danger"
                                                             title="Ekibi sil"
                                                             onClick={e => { e.stopPropagation(); handleDeleteTeam(team); }}
-                                                        >🗑</button>
-                                                        <span className="teams-chevron">{expanded ? '▲' : '▼'}</span>
+                                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        >
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <polyline points="3 6 5 6 21 6" />
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                                <line x1="10" y1="11" x2="10" y2="17" />
+                                                                <line x1="14" y1="11" x2="14" y2="17" />
+                                                            </svg>
+                                                        </button>
+                                                        <span className="teams-chevron" style={{ display: 'flex', alignItems: 'center' }}>
+                                                            {expanded ? (
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <polyline points="18 15 12 9 6 15" />
+                                                                </svg>
+                                                            ) : (
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <polyline points="6 9 12 15 18 9" />
+                                                                </svg>
+                                                            )}
+                                                        </span>
                                                     </div>
                                                 </div>
 
@@ -279,8 +301,20 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                                                                         className="teams-icon-btn teams-icon-btn--sm"
                                                                         title={email === currentUserEmail ? 'Ekipten ayrıl' : 'Üyeyi çıkar'}
                                                                         onClick={() => handleRemoveMember(team.id, email, team.name)}
+                                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}
                                                                     >
-                                                                        {email === currentUserEmail ? '🚪' : '✕'}
+                                                                        {email === currentUserEmail ? (
+                                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                                                                <polyline points="16 17 21 12 16 7" />
+                                                                                <line x1="21" y1="12" x2="9" y2="12" />
+                                                                            </svg>
+                                                                        ) : (
+                                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                                                            </svg>
+                                                                        )}
                                                                     </button>
                                                                 </li>
                                                             ))}
@@ -321,8 +355,13 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                                                             </button>
                                                         </form>
                                                         {team.members.length >= 3 && (
-                                                            <p className="teams-limit-msg">
-                                                                ⚠️ Ücretsiz planda maksimum 3 üye limiti.
+                                                            <p className="teams-limit-msg" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                                                    <line x1="12" y1="9" x2="12" y2="13" />
+                                                                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                                                                </svg>
+                                                                <span>Ücretsiz planda maksimum 3 üye limiti.</span>
                                                             </p>
                                                         )}
                                                     </div>
@@ -338,7 +377,13 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                         <>
                             {requests.length === 0 ? (
                                 <div className="teams-empty">
-                                    <span className="teams-empty-icon">📬</span>
+                                    <span className="teams-empty-icon">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                                            <line x1="12" y1="11" x2="12" y2="17" />
+                                            <line x1="9" y1="14" x2="15" y2="14" />
+                                        </svg>
+                                    </span>
                                     <p>Bekleyen davet yok.</p>
                                     <small>Bir ekipten davet geldiğinde burada görünecek.</small>
                                 </div>
@@ -347,7 +392,12 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                                     {requests.map(req => (
                                         <li key={req.id} className="teams-request-item">
                                             <div className="teams-request-info">
-                                                <span className="teams-request-icon">📩</span>
+                                                <span className="teams-request-icon">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                                        <polyline points="22,6 12,13 2,6" />
+                                                    </svg>
+                                                </span>
                                                 <div>
                                                     <strong>{req.team_name}</strong> ekibine davet edildiniz.
                                                 </div>
@@ -356,14 +406,23 @@ const TeamsPanel: React.FC<TeamsPanelProps> = ({ onClose, currentUserEmail, show
                                                 <button
                                                     className="teams-btn teams-btn--accept"
                                                     onClick={() => handleAccept(req.id, req.team_name)}
+                                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                                                 >
-                                                    ✓ Kabul
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="20 6 9 17 4 12" />
+                                                    </svg>
+                                                    <span>Kabul</span>
                                                 </button>
                                                 <button
                                                     className="teams-btn teams-btn--reject"
                                                     onClick={() => handleReject(req.id)}
+                                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                                                 >
-                                                    ✕ Reddet
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                                    </svg>
+                                                    <span>Reddet</span>
                                                 </button>
                                             </div>
                                         </li>

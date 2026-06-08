@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { userAPI, teamAPI } from '../services/api';
+import { userAPI } from '../services/api';
 
 export interface AssigneeMember {
     email: string;
@@ -22,7 +22,7 @@ const getColor = (email: string) => avatarColors[email.charCodeAt(0) % avatarCol
 const AssigneeSelector: React.FC<AssigneeSelectorProps> = ({
     boardId,
     currentAssignee,
-    currentUserEmail,
+    currentUserEmail: _,
     onSelect,
     onInvite,
 }) => {

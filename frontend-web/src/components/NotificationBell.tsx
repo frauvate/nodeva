@@ -19,7 +19,6 @@ interface NotificationBellProps {
 const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
     const unreadCount = notifications.filter(n => !n.read).length;
@@ -101,7 +100,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--glass-bg)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
             >
-                🔔
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
                 {unreadCount > 0 && (
                     <span style={{
                         position: 'absolute', top: 2, right: 2,
@@ -154,8 +156,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                     {/* Liste */}
                     <div style={{ overflowY: 'auto', flex: 1 }}>
                         {notifications.length === 0 ? (
-                            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                <div style={{ fontSize: '2rem', marginBottom: 8 }}>🔔</div>
+                            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ marginBottom: 8, color: 'var(--text-muted)' }}>
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z" />
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                    </svg>
+                                </div>
                                 <div style={{ fontSize: '0.85rem' }}>Bildirim yok</div>
                             </div>
                         ) : (
@@ -176,8 +183,18 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                                     onMouseEnter={e => { if (n.board_id) (e.currentTarget as HTMLElement).style.background = 'var(--glass-bg)'; }}
                                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'var(--accent-soft)'; }}
                                 >
-                                    <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>
-                                        {n.type === 'task_assigned' ? '📋' : '📩'}
+                                    <span style={{ flexShrink: 0, color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                                        {n.type === 'task_assigned' ? (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 2 }}>
+                                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                                            </svg>
+                                        ) : (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 2 }}>
+                                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                                <polyline points="22,6 12,13 2,6" />
+                                            </svg>
+                                        )}
                                     </span>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
