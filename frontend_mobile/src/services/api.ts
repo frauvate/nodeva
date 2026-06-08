@@ -3,10 +3,12 @@ import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 // Yerel ağdaki tüm cihazların (telefon dahil) bağlanabilmesi için
-// bilgisayarın yerel IP adresi kullanılıyor.
-const BASE_URL = 'http://192.168.1.105:8001';
+// .env dosyasındaki EXPO_PUBLIC_API_URL değişkenini kullan.
+// Örnek: EXPO_PUBLIC_API_URL=http://192.168.1.105:8001
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.1.105:8001';
 
 export { BASE_URL };
+
 
 const api = axios.create({
     baseURL: BASE_URL,

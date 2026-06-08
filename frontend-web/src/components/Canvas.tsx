@@ -834,8 +834,19 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                 </div>
 
                 {/* ── Body ── */}
-                            {node.data?.title || '(Başlık yok)'}
-                        </div>
+                <div className="node-title" style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                    marginBottom: 6,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                }}>
+                    {node.data?.title || '(Başlık yok)'}
+                </div>
                         {!isSpecialShape && (
                             <div className="node-content" style={{
                                 fontSize: '0.82rem',

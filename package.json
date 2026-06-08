@@ -1,0 +1,14 @@
+{
+  "name": "nodeva",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"BACKEND,WEB\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:backend": "cd backend && venv\\Scripts\\uvicorn main:app --host 0.0.0.0 --port 8001 --reload",
+    "dev:web": "cd frontend-web && npm run dev",
+    "dev:mobile": "cd frontend_mobile && npx expo start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
