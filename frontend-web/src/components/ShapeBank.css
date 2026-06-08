@@ -3,28 +3,30 @@
     top: 20px;
     left: 20px;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: 7px;
     z-index: 100;
     width: 140px;
-    box-shadow: var(--glass-shadow-raised);
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background: rgba(14, 14, 20, 0.92);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid var(--border-default);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .shape-bank-title {
     margin: 0 0 12px 0;
-    font-size: 0.8rem;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     text-align: center;
 }
 
 .shape-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     justify-content: center;
 }
 
@@ -35,15 +37,15 @@
     align-items: center;
     justify-content: center;
     cursor: grab;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border-subtle);
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 6px;
+    transition: all 0.15s ease;
 }
 
 .shape-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: var(--accent-primary);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.18);
 }
 
 .shape-item:active {
@@ -51,16 +53,16 @@
 }
 
 .shape-icon {
-    border: 2px solid rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
 }
 [data-theme="dark"] .shape-icon {
-    border: 2px solid rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.20);
 }
 
 .icon-capsule {
     width: 24px;
     height: 14px;
-    border-radius: 10px;
+    border-radius: 4px;
     background: var(--node-blue);
 }
 

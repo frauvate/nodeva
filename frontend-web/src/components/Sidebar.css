@@ -2,19 +2,17 @@
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: 16px;
-    left: 16px;
-    height: calc(100vh - 32px);
-    width: 280px;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
     z-index: 100;
-    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow-raised);
-    border-radius: 20px;
+    background: var(--bg-base);
+    border-right: 1px solid var(--border-subtle);
+    box-shadow: none;
+    border-radius: 0;
 }
 
 .sidebar.closed {
@@ -25,16 +23,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 16px;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    padding: 16px 16px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .brand {
-    font-size: 1.4rem;
-    font-weight: 800;
+    font-size: 15px;
+    font-weight: 700;
     margin: 0;
-    letter-spacing: -0.5px;
-    color: var(--accent-primary);
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
 }
 
 .closed .brand,
@@ -48,38 +46,43 @@
 }
 
 .theme-toggle {
-    background: var(--accent-gradient-soft);
-    border: 1px solid var(--glass-border);
+    background: transparent;
+    border: 1px solid var(--border-default);
     cursor: pointer;
-    font-size: 1rem;
-    padding: 5px 8px;
+    font-size: 13px;
+    padding: 4px 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    transition: all 0.2s ease;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
 }
 
 .theme-toggle:hover {
-    background: var(--accent-primary);
-    transform: scale(1.06);
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
+    border-color: var(--border-focus);
 }
 
 .toggle-btn {
-    background: var(--accent-gradient-soft);
-    border: 1px solid var(--glass-border);
+    background: transparent;
+    border: 1px solid var(--border-default);
     cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--accent-primary);
-    padding: 6px 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    line-height: 1;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .toggle-btn:hover {
-    background: var(--accent-primary);
-    color: #fff;
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
+    border-color: var(--border-focus);
 }
 
 .sidebar-content {
@@ -87,17 +90,17 @@
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    padding: 16px 14px;
+    padding: 16px 12px;
     overflow-y: auto;
 }
 
 .nav-title {
-    font-size: 0.72rem;
+    font-size: 10px;
     color: var(--text-muted);
-    margin-bottom: 10px;
-    font-weight: 700;
+    margin-bottom: 8px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.08em;
 }
 
 .board-list {
@@ -105,30 +108,37 @@
 }
 
 .board-list li {
-    padding: 9px 12px;
+    padding: 6px 12px;
     margin-bottom: 4px;
-    border-radius: 12px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.12s ease;
     border: 1px solid transparent;
-    font-size: 0.87rem;
-    color: var(--text-primary);
+    border-left: 2px solid transparent;
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
 }
 
 .board-list li:hover {
-    background: var(--accent-gradient-soft);
-    border-color: var(--glass-border-subtle);
+    background: var(--bg-glass);
+    color: var(--text-primary);
 }
 
 .board-list li.active {
-    background: var(--accent-primary);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.25);
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
+    border-left: 2px solid var(--accent-primary);
+    border-radius: 0 6px 6px 0;
 }
 
 .board-list li.active button {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--text-secondary) !important;
+}
+
+.board-list li.active button:hover {
+    color: var(--text-primary) !important;
 }
 
 .user-section {
@@ -136,24 +146,24 @@
     align-items: center;
     gap: 10px;
     padding: 12px 10px;
-    border-top: 1px solid var(--glass-border);
-    border-radius: 12px;
-    background: var(--accent-gradient-soft);
+    border-top: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: var(--bg-glass);
     margin-top: 8px;
 }
 
 .avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--accent-primary);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
     flex-shrink: 0;
 }
 
@@ -161,62 +171,65 @@
 .sidebar-nav-tabs {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .sidebar-nav-tab {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
     border: 1px solid transparent;
+    border-left: 2px solid transparent;
     background: transparent;
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
     text-align: left;
-    transition: all 0.2s ease;
+    transition: all 0.12s ease;
 }
 
 .sidebar-nav-tab svg {
     color: var(--text-muted);
-    transition: color 0.2s ease;
+    transition: color 0.12s ease;
     flex-shrink: 0;
 }
 
 .sidebar-nav-tab:hover {
-    background: var(--accent-gradient-soft);
-    border-color: var(--glass-border-subtle);
+    background: var(--bg-glass);
+    color: var(--text-primary);
 }
 
 .sidebar-nav-tab.active {
-    background: var(--accent-primary);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
+    border-left: 2px solid var(--accent-primary);
+    border-radius: 0 6px 6px 0;
 }
 
 .sidebar-nav-tab.active svg {
-    color: #fff;
+    color: var(--text-accent);
 }
 
 /* ── Delete Button Styling ─────────────────────────────── */
+.sidebar-delete-btn {
+    opacity: 0.3;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.board-list li:hover .sidebar-delete-btn {
+    opacity: 1;
+}
+
 .sidebar-delete-btn:hover {
-    background: rgba(239, 68, 68, 0.15) !important;
-    color: #ef4444 !important;
-}
-
-.board-list li.active .sidebar-delete-btn {
-    color: rgba(255, 255, 255, 0.7) !important;
-}
-
-.board-list li.active .sidebar-delete-btn:hover {
-    background: rgba(255, 255, 255, 0.2) !important;
-    color: #fff !important;
+    background: rgba(248, 113, 113, 0.1) !important;
+    color: var(--status-blocked) !important;
+    border-radius: 4px;
 }
 
 /* ── Folder Integration Styles ────────────────────────────── */
@@ -224,74 +237,74 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
   user-select: none;
-  transition: all 0.2s ease;
+  transition: all 0.12s ease;
   border: 1px solid transparent;
-  color: var(--text-primary);
+  border-left: 2px solid transparent;
+  color: var(--text-secondary);
 }
 
 .folder-row:hover {
-  background: var(--accent-gradient-soft);
-  border-color: var(--glass-border-subtle);
+  background: var(--bg-glass);
+  color: var(--text-primary);
 }
 
 .folder-row.open {
-  font-weight: 600;
-  background: var(--accent-gradient-soft);
-  border-color: var(--glass-border-subtle);
+  font-weight: 500;
+  background: var(--bg-glass);
+  color: var(--text-primary);
 }
 
 .folder-row-drop-target {
-  border: 2px dashed var(--accent-primary) !important;
-  background: var(--accent-gradient-soft) !important;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  border: 1px dashed var(--accent-primary) !important;
+  background: var(--bg-glass-hover) !important;
+  border-radius: 6px;
 }
 
 .folder-board-indent {
-  padding-left: 16px;
-  border-left: 2px solid var(--glass-border-subtle);
-  margin-left: 18px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border-subtle);
+  margin-left: 14px;
   margin-top: 4px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .folder-color-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
   cursor: pointer;
-  border: 1px solid var(--glass-border);
-  transition: transform 0.15s ease;
+  border: 1px solid var(--border-default);
+  transition: transform 0.12s ease;
 }
 
 .folder-color-dot:hover {
-  transform: scale(1.25);
+  transform: scale(1.2);
 }
 
 .folder-color-picker {
   display: flex;
   gap: 6px;
-  padding: 8px;
+  padding: 6px;
   position: absolute;
-  top: 30px;
+  top: 24px;
   left: 12px;
   z-index: 100;
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
   box-shadow: var(--glass-shadow-raised);
 }
 
 .add-folder-btn-nav {
-  transition: transform 0.15s ease, color 0.15s ease;
+  transition: transform 0.12s ease, color 0.12s ease;
 }
 
 .add-folder-btn-nav:hover {
-  transform: scale(1.15);
-  color: var(--accent-secondary) !important;
-}
+  transform: scale(1.1);
+  color: var(--text-accent) !important;
+}

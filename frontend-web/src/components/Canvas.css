@@ -3,7 +3,9 @@
     flex-grow: 1;
     position: relative;
     overflow: hidden;
-    background: transparent;
+    background: var(--bg-void);
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
 }
 
 .edges-layer {
@@ -39,48 +41,55 @@
 /* ── Canvas node card ─────────────────────────────────── */
 .canvas-node {
     position: absolute;
-    padding: 16px;
-    border-radius: 16px;
-
-    /* Glassmorphism node */
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow-node);
-
-    transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.15s ease;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(22, 22, 31, 0.85);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.05);
+    transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
     touch-action: none;
 }
 
 .canvas-node:hover {
-    box-shadow: var(--glass-shadow-raised);
-    transform: translateY(-1px);
+    border-color: rgba(255,255,255,0.15);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.2);
 }
 
-.canvas-node:active {
-    transform: translateY(0);
+/* ── Status tags (Strips on top of cards) ───────────────── */
+.node-status-tag {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
+.node-status-tag.status-todo { background-color: var(--status-todo); }
+.node-status-tag.status-in_progress { background-color: var(--status-progress); }
+.node-status-tag.status-done { background-color: var(--status-done); }
 
 /* ── Typography ───────────────────────────────────────── */
 .node-title {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 15px !important;
+    font-weight: 600 !important;
     margin-bottom: 6px;
     color: var(--text-primary);
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 .node-content {
-    font-size: 0.8rem;
-    line-height: 1.5;
+    font-size: 12px !important;
+    line-height: 1.6;
     color: var(--text-secondary);
     white-space: pre-wrap;
 }
 
 /* ── Flowchart Shapes ─────────────────────────────────── */
 .canvas-node-capsule {
-    border-radius: 65px;
+    border-radius: 12px; /* Redesigned for precision workspace */
     align-items: center;
     justify-content: center;
 }
@@ -103,7 +112,7 @@
 
 .canvas-node-diamond-wrapper .shape-bg {
     transform: rotate(45deg);
-    border-radius: 12px;
+    border-radius: 6px;
 }
 
 .canvas-node-diamond-wrapper .node-inner-content {
@@ -124,7 +133,7 @@
 /* ── Parallelogram Shape (Data I/O) ──────────────────────── */
 .canvas-node-parallelogram-wrapper .shape-bg {
     transform: skewX(-15deg);
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 .canvas-node-parallelogram-wrapper .node-inner-content {
@@ -139,10 +148,10 @@
 
 /* ── Mindmap Shapes ───────────────────────────────────── */
 .canvas-node-pill {
-    border-radius: 50px;
+    border-radius: 12px;
     align-items: center;
     justify-content: center;
-    border: 2px dashed var(--accent-primary) !important;
+    border: 1.5px dashed var(--accent-primary) !important;
 }
 
 .canvas-node-pill .node-header {
@@ -154,13 +163,13 @@
 }
 
 .canvas-node-pill .node-title {
-    font-size: 1.15rem;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .canvas-node-mindmap-main {
-    border-radius: 24px;
-    border: 1.5px solid var(--accent-secondary) !important;
+    border-radius: 10px;
+    border: 1px solid var(--accent-secondary) !important;
     align-items: center;
     justify-content: center;
 }
@@ -184,7 +193,6 @@
 
 .canvas-node-mindmap-sub:hover {
     border-bottom-color: var(--accent-primary) !important;
-    transform: none;
     box-shadow: none;
 }
 
@@ -193,9 +201,40 @@
 }
 
 .canvas-node-mindmap-sub .node-title {
-    font-size: 0.85rem;
+    font-size: 12px;
     font-weight: 500;
     margin-bottom: 0;
+}
+
+/* ── Connection Lines (Canvas Arrows) ───────────────────── */
+.edge-path {
+    stroke: rgba(99, 102, 241, 0.6) !important;
+    stroke-width: 1.5px !important;
+    fill: none !important;
+    transition: stroke-width 0.1s ease;
+}
+
+.edge-path:hover {
+    stroke-width: 2.5px !important;
+    stroke: var(--accent-primary) !important;
+}
+
+.active-edge-path {
+    stroke: var(--accent-primary) !important;
+    stroke-width: 1.5px !important;
+    stroke-dasharray: 6 3 !important;
+    animation: dash 1s linear infinite;
+    fill: none !important;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -20;
+    }
+}
+
+#arrowhead polygon {
+    fill: rgba(99, 102, 241, 0.6);
 }
 
 /* ── Kanban Board ─────────────────────────────────────── */
@@ -208,12 +247,12 @@
     box-sizing: border-box;
     position: relative;
     width: 100%;
-    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .kanban-board-inner {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
@@ -226,51 +265,46 @@
     min-width: 280px;
     display: flex;
     flex-direction: column;
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg-strong);
-    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-base);
+    padding: 16px;
     box-sizing: border-box;
     max-height: 100%;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.kanban-column:hover {
-    box-shadow: var(--glass-shadow-raised);
 }
 
 .kanban-column-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .kanban-column-title-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .kanban-column-title {
     margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     color: var(--text-primary);
 }
 
 .kanban-column-badge {
-    background: var(--glass-border-subtle);
-    padding: 3px 9px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    background: var(--bg-glass-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
     color: var(--text-secondary);
 }
 
 .kanban-column-actions {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .kanban-column-btn {
@@ -282,15 +316,14 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 8px;
+    border-radius: 6px;
     color: var(--text-secondary);
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
 .kanban-column-btn:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--accent-primary);
-    transform: scale(1.05);
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
 }
 
 .kanban-cards-list {
@@ -298,35 +331,28 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     padding-right: 4px;
 }
 
-.kanban-cards-list::-webkit-scrollbar {
-    width: 5px;
-}
-
-.kanban-cards-list::-webkit-scrollbar-thumb {
-    background: var(--glass-border);
-    border-radius: 4px;
-}
-
 .kanban-card {
-    padding: 16px;
-    border-radius: 16px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow-node);
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(22, 22, 31, 0.85);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.05);
     cursor: grab;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 120ms ease;
     position: relative;
     user-select: none;
 }
 
 .kanban-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--glass-shadow-raised);
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba(255,255,255,0.15);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.2);
+    transform: translateY(-1px);
 }
 
 .kanban-card:active {
@@ -335,8 +361,8 @@
 }
 
 .kanban-card.selected {
-    border: 2px solid var(--accent-primary);
-    box-shadow: 0 0 0 3px var(--accent-gradient-soft), var(--glass-shadow-node);
+    border: 1.5px solid var(--accent-primary) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 4px 16px rgba(0,0,0,0.5) !important;
 }
 
 .kanban-card-header {
@@ -344,57 +370,55 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 8px;
-    padding-left: 10px;
 }
 
 .kanban-card-type {
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
 }
 
 .kanban-card-delete-btn {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 13px;
     color: var(--text-muted);
     line-height: 1;
     padding: 0;
-    transition: color 0.15s ease, transform 0.15s ease;
+    transition: color 0.15s ease;
 }
 
 .kanban-card-delete-btn:hover {
-    color: #ef4444;
-    transform: scale(1.15);
+    color: var(--status-blocked);
 }
 
 .kanban-card-body {
-    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .kanban-card-title {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 15px;
     color: var(--text-primary);
     margin-bottom: 8px;
-    line-height: 1.35;
+    line-height: 1.4;
 }
 
 .kanban-card-content {
-    font-size: 0.82rem;
+    font-size: 12px;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
     white-space: pre-wrap;
 }
 
 .kanban-card-assignee {
     margin-top: 12px;
-    font-size: 0.75rem;
-    color: var(--accent-primary);
+    font-size: 11px;
+    color: var(--text-accent);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -409,7 +433,7 @@
     box-sizing: border-box;
     position: relative;
     width: 100%;
-    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gantt-board-inner {
@@ -419,11 +443,11 @@
     max-width: 1400px;
     margin: 0 auto;
     height: 100%;
-    border-radius: 24px;
+    border-radius: 12px;
     overflow: hidden;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg-strong);
-    box-shadow: var(--glass-shadow-raised);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-base);
+    box-shadow: none;
     box-sizing: border-box;
 }
 
@@ -431,41 +455,40 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .gantt-board-title-container {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .gantt-board-title {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 800;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--text-primary);
 }
 
 .gantt-add-btn {
     display: flex;
     align-items: center;
-    padding: 10px 18px;
-    border-radius: 12px;
+    padding: 7px 14px;
+    border-radius: 7px;
     background: var(--accent-primary);
     color: white;
     border: none;
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 500;
+    font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    transition: all 0.15s ease;
 }
 
 .gantt-add-btn:hover {
     background: var(--accent-hover);
-    transform: translateY(-1px);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
 .gantt-board-body {
@@ -476,24 +499,24 @@
 
 .gantt-task-side {
     width: 320px;
-    border-right: 1px solid var(--glass-border-subtle);
+    border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    background: rgba(255,255,255,0.01);
+    background: rgba(255,255,255,0.005);
 }
 
 .gantt-task-header-row {
     display: flex;
-    height: 60px;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    height: 52px;
+    border-bottom: 1px solid var(--border-subtle);
     align-items: center;
     padding: 0 16px;
     box-sizing: border-box;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.08em;
 }
 
 .gantt-task-header-title {
@@ -515,48 +538,48 @@
 }
 
 .gantt-task-list::-webkit-scrollbar-thumb {
-    background: var(--glass-border);
+    background: var(--border-subtle);
     border-radius: 4px;
 }
 
 .gantt-task-row {
     display: flex;
-    height: 52px;
+    height: 48px;
     align-items: center;
     padding: 0 16px;
     box-sizing: border-box;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.12s ease;
 }
 
 .gantt-task-row:hover {
-    background: rgba(99, 102, 241, 0.05);
+    background: var(--bg-glass);
 }
 
 .gantt-task-row.selected {
-    background: rgba(99, 102, 241, 0.1);
-    border-left: 3px solid var(--accent-primary);
+    background: var(--bg-glass-hover);
+    border-left: 2px solid var(--accent-primary);
 }
 
 .gantt-task-row-name-col {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     overflow: hidden;
 }
 
 .gantt-task-bullet {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 
 .gantt-task-name {
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -570,22 +593,23 @@
 }
 
 .gantt-task-assignee-tag {
-    font-size: 0.72rem;
-    color: var(--accent-primary);
-    background: rgba(79, 172, 254, 0.12);
-    padding: 3px 8px;
-    border-radius: 20px;
+    font-size: 11px;
+    color: var(--text-accent);
+    background: var(--bg-glass);
+    padding: 2px 6px;
+    border-radius: 4px;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: inline-flex;
     align-items: center;
+    border: 1px solid var(--border-subtle);
 }
 
 .gantt-task-assignee-none {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 11px;
 }
 
 .gantt-timeline-side {
@@ -600,7 +624,7 @@
 }
 
 .gantt-timeline-side::-webkit-scrollbar-thumb {
-    background: var(--glass-border);
+    background: var(--border-subtle);
     border-radius: 4px;
 }
 
@@ -614,35 +638,35 @@
 
 .gantt-month-row {
     height: 30px;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     padding-left: 16px;
-    background: rgba(255,255,255,0.01);
+    background: rgba(255,255,255,0.005);
 }
 
 .gantt-month-title {
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--text-secondary);
 }
 
 .gantt-days-row {
     height: 30px;
-    border-bottom: 1px solid var(--glass-border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
 }
 
 .gantt-day-header-cell {
     width: 40px;
     flex-shrink: 0;
-    border-right: 1px solid var(--glass-border-subtle);
+    border-right: 1px solid var(--border-subtle);
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 500;
     color: var(--text-muted);
 }
 
@@ -661,7 +685,7 @@
 .gantt-vertical-line-col {
     width: 40px;
     height: 100%;
-    border-right: 1px solid rgba(255,255,255,0.03);
+    border-right: 1px solid rgba(255,255,255,0.02);
     box-sizing: border-box;
     flex-shrink: 0;
 }
@@ -670,8 +694,8 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 2px;
-    border-left: 2px dashed #ff4a4a;
+    width: 1.5px;
+    border-left: 1.5px dashed var(--status-blocked);
     z-index: 10;
     pointer-events: none;
 }
@@ -680,13 +704,13 @@
     position: absolute;
     top: 8px;
     left: 4px;
-    background: #ff4a4a;
+    background: var(--status-blocked);
     color: white;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(255,74,74,0.3);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 3px;
+    box-shadow: 0 2px 6px rgba(248,113,113,0.3);
 }
 
 .gantt-rows-container {
@@ -698,8 +722,8 @@
 }
 
 .gantt-grid-row {
-    height: 52px;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    height: 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
     position: relative;
     display: flex;
     align-items: center;
@@ -708,28 +732,28 @@
 }
 
 .gantt-grid-row:hover {
-    background: rgba(255,255,255,0.01);
+    background: rgba(255,255,255,0.005);
 }
 
 .gantt-grid-row.selected {
-    background: rgba(99, 102, 241, 0.03);
+    background: var(--bg-glass);
 }
 
 .gantt-bar-wrapper {
     position: absolute;
-    height: 28px;
-    border-radius: 8px;
+    height: 24px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     box-sizing: border-box;
     overflow: hidden;
-    transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+    transition: transform 0.15s, opacity 0.15s;
     cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 .gantt-bar-wrapper:hover {
-    transform: scaleY(1.05);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: scaleY(1.02);
 }
 
 .gantt-bar-progress-fill {
@@ -744,9 +768,9 @@
 .gantt-bar-label {
     position: relative;
     z-index: 2;
-    padding-left: 10px;
-    font-size: 0.72rem;
-    font-weight: 700;
+    padding-left: 8px;
+    font-size: 11px;
+    font-weight: 500;
     color: #fff;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
@@ -758,29 +782,25 @@
     width: 6px;
     z-index: 5;
     cursor: ew-resize;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.2);
     opacity: 0;
-    transition: opacity 0.15s, background-color 0.15s;
+    transition: opacity 0.12s;
 }
 
 .gantt-bar-wrapper:hover .gantt-bar-resize-handle {
     opacity: 1;
 }
 
-.gantt-bar-resize-handle:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
 .gantt-bar-resize-handle.start {
     left: 0;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 
 .gantt-bar-resize-handle.end {
     right: 0;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .gantt-bar-wrapper.dragging {
@@ -793,5 +813,152 @@
     padding: 32px 24px;
     text-align: center;
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: 13px;
+}
+
+/* ── Properties panel & overlay ────────────────────────── */
+.property-panel {
+    background: rgba(17, 17, 24, 0.85) !important;
+    backdrop-filter: blur(24px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.property-panel h3 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.01em !important;
+}
+
+.property-panel label {
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+}
+
+.property-panel input,
+.property-panel textarea,
+.property-panel select {
+    background: rgba(10, 10, 15, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    color: var(--text-primary) !important;
+    outline: none !important;
+    transition: all 0.15s ease !important;
+    font-family: inherit;
+    width: 100%;
+}
+
+.property-panel input::placeholder,
+.property-panel textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.property-panel input:focus,
+.property-panel textarea:focus,
+.property-panel select:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+    background: rgba(10, 10, 15, 0.7) !important;
+}
+
+/* ── Zoom Controls Overlay ──────────────────────────────── */
+.zoom-controls {
+    background: rgba(14, 14, 20, 0.92) !important;
+    backdrop-filter: blur(12px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
+    border: 1px solid var(--border-default) !important;
+    border-radius: 7px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+
+.zoom-controls button:hover {
+    background: var(--bg-glass-hover) !important;
+}
+
+/* ── Status badges inside cards ────────────────────────── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 8px;
+}
+.status-badge .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-badge.status-todo .status-dot {
+    background-color: rgba(255,255,255,0.25);
+}
+.status-badge.status-todo .status-text {
+    color: var(--text-muted);
+}
+.status-badge.status-in_progress .status-dot {
+    background-color: #fbbf24;
+}
+.status-badge.status-in_progress .status-text {
+    color: rgba(251,191,36,0.9);
+}
+.status-badge.status-done .status-dot {
+    background-color: #34d399;
+}
+.status-badge.status-done .status-text {
+    color: rgba(52,211,153,0.9);
+}
+
+/* ── Status select buttons inside property panels ────────── */
+.status-select-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 4px;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.15s ease;
+}
+.status-select-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.status-select-btn.active {
+    background: rgba(99, 102, 241, 0.08) !important;
+    border-color: var(--accent-primary) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+}
+.status-select-btn .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-select-btn.status-todo .status-dot {
+    background-color: rgba(255,255,255,0.25);
+}
+.status-select-btn.status-in_progress .status-dot {
+    background-color: #fbbf24;
+}
+.status-select-btn.status-done .status-dot {
+    background-color: #34d399;
 }

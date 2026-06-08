@@ -82,23 +82,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
             {/* Çan butonu */}
             <button
                 id="notif-bell-btn"
+                className="notif-bell-icon"
                 onClick={handleOpen}
                 title="Bildirimler"
-                style={{
-                    position: 'relative',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '6px 8px',
-                    borderRadius: 8,
-                    color: 'var(--text-secondary)',
-                    fontSize: '1.3rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    transition: 'color 0.15s, background 0.15s',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--glass-bg)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+                style={{ position: 'relative' }}
             >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z" />
@@ -106,12 +93,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                 </svg>
                 {unreadCount > 0 && (
                     <span style={{
-                        position: 'absolute', top: 2, right: 2,
-                        background: '#ef4444', color: '#fff',
+                        position: 'absolute', top: -3, right: -3,
+                        background: 'var(--status-blocked)', color: '#fff',
                         borderRadius: '50%', fontSize: '0.6rem',
-                        fontWeight: 800, minWidth: 16, height: 16,
+                        fontWeight: 800, minWidth: 14, height: 14,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: '0 3px', lineHeight: 1, border: '2px solid var(--panel-bg)',
+                        padding: '0 2px', lineHeight: 1, border: '2.5px solid var(--bg-base)',
                     }}>
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
@@ -126,10 +113,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                     right: 0,
                     width: 320,
                     maxHeight: 420,
-                    background: 'var(--panel-bg)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 14,
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                    background: 'rgba(14, 14, 20, 0.92)',
+                    backdropFilter: 'blur(24px)',
+                    WebkitBackdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 12,
+                    boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05)',
                     zIndex: 600,
                     display: 'flex',
                     flexDirection: 'column',
@@ -138,7 +127,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                     {/* Header */}
                     <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px 16px', borderBottom: '1px solid var(--glass-border)',
+                        padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)',
                     }}>
                         <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                             Bildirimler {unreadCount > 0 && <span style={{ color: 'var(--accent-primary)', marginLeft: 4 }}>({unreadCount})</span>}
@@ -176,12 +165,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigateToBoard }
                                         gap: 10,
                                         padding: '10px 14px',
                                         cursor: n.board_id ? 'pointer' : 'default',
-                                        background: n.read ? 'transparent' : 'var(--accent-soft)',
-                                        borderBottom: '1px solid var(--glass-border)',
+                                        background: n.read ? 'transparent' : 'rgba(99, 102, 241, 0.04)',
+                                        borderBottom: '1px solid var(--border-subtle)',
                                         transition: 'background 0.15s',
                                     }}
-                                    onMouseEnter={e => { if (n.board_id) (e.currentTarget as HTMLElement).style.background = 'var(--glass-bg)'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'var(--accent-soft)'; }}
+                                    onMouseEnter={e => { if (n.board_id) (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)'; }}
+                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'rgba(99, 102, 241, 0.04)'; }}
                                 >
                                     <span style={{ flexShrink: 0, color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                                         {n.type === 'task_assigned' ? (

@@ -1,89 +1,88 @@
 /* ── FAB Container ───────────────────────────────────────── */
 .fab-container {
     position: absolute;
-    bottom: 28px;
-    left: 28px;
+    bottom: 24px;
+    left: 24px;
     z-index: 1000;
 }
 
 /* ── FAB Button ──────────────────────────────────────────── */
 .fab-button {
-    width: 56px;
-    height: 56px;
-    border-radius: 28px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     background: var(--accent-primary);
     color: white;
-    font-size: 2rem;
-    font-weight: 300;
+    font-size: 24px;
+    font-weight: 400;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     line-height: 1;
 }
 
 .fab-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    background: var(--accent-hover);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
 .fab-button.open {
     transform: rotate(45deg);
-    background: var(--glass-bg-strong);
+    background: rgba(14, 14, 20, 0.92);
     color: var(--text-primary);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow-raised);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 /* ── FAB Menu ────────────────────────────────────────────── */
 .fab-menu {
     position: absolute;
-    bottom: 70px;
+    bottom: 60px;
     left: 0;
     width: 320px;
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow-raised);
-    border-radius: 16px;
+    background: rgba(14, 14, 20, 0.92);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+    border-radius: 12px;
     padding: 16px;
     animation: menu-in 0.2s ease-out forwards;
     transform-origin: bottom left;
 }
 
 @keyframes menu-in {
-    from { opacity: 0; transform: scale(0.9) translateY(10px); }
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .menu-section {
-    border-bottom: 1px solid var(--glass-border-subtle);
-    padding-bottom: 16px;
-    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 14px;
+    margin-bottom: 14px;
 }
 
 .section-title {
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
 }
 
 /* ── Basic Nodes ─────────────────────────────────────────── */
 .basic-grid {
-    grid-template-columns: repeat(2, 1fr); /* Only two columns for basic nodes */
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .icon-task {
-    width: 20px;
-    height: 14px;
-    border-radius: 3px;
+    width: 18px;
+    height: 12px;
+    border-radius: 2px;
     background: var(--node-blue);
     position: relative;
 }
@@ -91,22 +90,22 @@
 .icon-task::after {
     content: '';
     position: absolute;
-    left: 4px;
-    top: 4px;
+    left: 3px;
+    top: 3px;
     width: 12px;
-    height: 2px;
-    background: rgba(0,0,0,0.3);
+    height: 1.5px;
+    background: rgba(255,255,255,0.3);
     border-radius: 1px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 3px 0 rgba(255,255,255,0.3);
 }
 
 .icon-note {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 2px;
     background: var(--node-green);
     position: relative;
-    border-top-right-radius: 6px;
+    border-top-right-radius: 4px;
 }
 
 /* ── AI Section ──────────────────────────────────────────── */
@@ -119,33 +118,49 @@
     flex: 1;
     min-width: 0;
     padding: 8px 12px;
-    border: 1px solid var(--glass-border-subtle);
-    border-radius: 10px;
-    background: var(--glass-bg);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 7px;
+    background: rgba(255,255,255,0.04);
     color: var(--text-primary);
-    font-size: 0.85rem;
+    font-size: 13px;
     outline: none;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.ai-input::placeholder {
+    color: var(--text-muted);
 }
 
 .ai-input:focus {
-    border-color: var(--accent-primary);
-    background: var(--glass-bg-strong);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .ai-btn {
-    padding: 8px 16px;
-    border-radius: 10px;
+    padding: 7px 14px;
+    border-radius: 7px;
     background: var(--accent-primary);
     color: white;
     border: none;
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 500;
+    font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
 }
 
-.ai-btn:hover { background: var(--accent-hover); }
+.ai-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.ai-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 /* ── Shape Grid ──────────────────────────────────────────── */
 .shape-grid {
@@ -159,57 +174,58 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 8px;
-    border-radius: 8px;
+    padding: 8px 4px;
+    border-radius: 6px;
     cursor: grab;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border-subtle);
-    transition: all 0.2s ease;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.10);
+    transition: all 0.15s ease;
 }
 
 .shape-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: var(--accent-primary);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.18);
 }
 
 .shape-item:active { cursor: grabbing; }
 
 .shape-label {
-    font-size: 0.65rem;
+    font-size: 11px;
     color: var(--text-secondary);
     font-weight: 500;
+    text-align: center;
 }
 
 .shape-icon {
-    border: 2px solid rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
 }
 [data-theme="dark"] .shape-icon {
-    border: 2px solid rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.20);
 }
 
-.icon-capsule { width: 20px; height: 12px; border-radius: 10px; background: var(--node-blue); }
+.icon-capsule { width: 20px; height: 12px; border-radius: 4px; background: var(--node-blue); }
 .icon-process { width: 20px; height: 14px; border-radius: 2px; background: var(--node-pink); }
-.icon-diamond { width: 14px; height: 14px; transform: rotate(45deg); background: var(--node-purple); margin: 2px; }
+.icon-diamond { width: 12px; height: 12px; transform: rotate(45deg); background: var(--node-purple); margin: 2px; }
 .icon-parallelogram { width: 20px; height: 14px; transform: skewX(-20deg); background: var(--node-yellow); }
 
 /* Zihin Haritası İkonları */
 .icon-mindmap-root {
     width: 20px;
     height: 12px;
-    border-radius: 10px;
+    border-radius: 4px;
     background: var(--node-blue);
-    border: 1.5px dashed var(--accent-primary) !important;
+    border: 1px dashed var(--accent-primary) !important;
 }
 .icon-mindmap-main {
     width: 18px;
     height: 14px;
-    border-radius: 5px;
+    border-radius: 4px;
     background: var(--node-purple);
-    border: 1.5px solid var(--accent-secondary) !important;
+    border: 1px solid var(--accent-secondary) !important;
 }
 .icon-mindmap-sub {
     width: 18px;
-    height: 4px;
+    height: 3px;
     background: transparent;
-    border-bottom: 2px solid var(--text-muted);
+    border-bottom: 1.5px solid var(--text-muted);
 }

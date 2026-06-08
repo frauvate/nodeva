@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import Toolbar from '../components/Toolbar';
 import Canvas from '../components/Canvas';
@@ -29,6 +29,26 @@ const Dashboard: React.FC = () => {
 
     // Pending team request badge
     const [pendingRequestCount, setPendingRequestCount] = useState(0);
+
+    // Profile menu state & ref
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+
+    const avatarLetter = userEmail ? userEmail[0].toUpperCase() : '?';
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+                setShowProfileMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const { toasts, showToast, removeToast } = useToast();
 
@@ -134,19 +154,11 @@ const Dashboard: React.FC = () => {
         setRefreshKey(old => old + 1);
     };
 
-    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        return (localStorage.getItem('theme') as 'light' | 'dark') ||
-               (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    });
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+    }, []);
 
     const handleOpenTeams = () => {
         setShowTeamsPanel(true);
@@ -180,39 +192,71 @@ const Dashboard: React.FC = () => {
                     onDeleteBoard={(id, title) => setDeleteTarget({ id, title })}
                     userEmail={userEmail}
                     userId={userId}
-                    theme={theme}
-                    onToggleTheme={toggleTheme}
+                    theme="dark"
+                    onToggleTheme={() => {}}
                     currentView={currentView}
                     onSelectView={(view) => setCurrentView(view as any)}
                     isOpen={sidebarOpen}
                     onToggleOpen={() => setSidebarOpen(!sidebarOpen)}
                 />
                 <div className="main-content">
-                    {/* Teams floating icon — sağ üst */}
-                    <button
-                        id="teams-fab-btn"
-                        className="teams-fab-icon"
-                        onClick={handleOpenTeams}
-                        title="Ekipler ve İşbirliği"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="18" cy="5" r="3"/>
-                            <circle cx="6" cy="12" r="3"/>
-                            <circle cx="18" cy="19" r="3"/>
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                        </svg>
-                        {pendingRequestCount > 0 && (
-                            <span className="teams-fab-badge">{pendingRequestCount}</span>
-                        )}
-                    </button>
-                    {/* Bildirim çanı */}
-                    <div style={{ position: 'absolute', top: 16, right: 60, zIndex: 200 }}>
+                    {/* Üst Navbar */}
+                    <div className="top-navbar">
+                        {/* Paylaş / Ekipler Butonu */}
+                        <button
+                            id="teams-fab-btn"
+                            className="top-navbar-btn"
+                            onClick={handleOpenTeams}
+                            title="Ekipler ve İşbirliği"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="18" cy="5" r="3"/>
+                                <circle cx="6" cy="12" r="3"/>
+                                <circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                            {pendingRequestCount > 0 && (
+                                <span className="top-navbar-badge">{pendingRequestCount}</span>
+                            )}
+                        </button>
+
+                        {/* Bildirim Çanı */}
                         <NotificationBell
                             onNavigateToBoard={(boardId) => {
                                 setActiveBoardId(boardId);
                             }}
                         />
+
+                        {/* Profil Menüsü */}
+                        <div className="profile-menu-container" ref={profileMenuRef}>
+                            <button
+                                className="top-navbar-btn"
+                                onClick={() => setShowProfileMenu(prev => !prev)}
+                                title="Profil"
+                            >
+                                <div className="avatar-circle">{avatarLetter}</div>
+                            </button>
+
+                            {showProfileMenu && (
+                                <div className="profile-dropdown">
+                                    <div className="profile-dropdown-header">
+                                        <div className="profile-dropdown-email" title={userEmail}>
+                                            {userEmail}
+                                        </div>
+                                    </div>
+                                    <div className="profile-dropdown-divider" />
+                                    <button className="profile-dropdown-item logout-btn" onClick={handleLogout}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}>
+                                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                            <polyline points="16 17 21 12 16 7" />
+                                            <line x1="21" y1="12" x2="9" y2="12" />
+                                        </svg>
+                                        Çıkış Yap
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     {currentView === 'templates' ? (
                         <TemplatesView 

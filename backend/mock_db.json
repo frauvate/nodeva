@@ -168,15 +168,18 @@
             "color": "#E3F2FD",
             "assignee": "esmaasyldrm@gmail.com",
             "assignee_name": "",
-            "status": "in_progress"
+            "status": "in_progress",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
           "id": "step_2",
           "type": "task",
           "position": {
-            "x": 528.2666727701823,
-            "y": 272.6666666666668
+            "x": 530.3024148467559,
+            "y": 273.68461536353595
           },
           "data": {
             "title": "Tasarım ve UX/UI Geliştirme",
@@ -184,7 +187,10 @@
             "color": "#E8F5E9",
             "assignee": "",
             "assignee_name": "",
-            "status": "done"
+            "status": "done",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -200,7 +206,10 @@
             "color": "#F3E5F5",
             "assignee": "",
             "assignee_name": "",
-            "status": "done"
+            "status": "done",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -216,7 +225,10 @@
             "color": "var(--node-pink)",
             "assignee": "",
             "assignee_name": "",
-            "status": "todo"
+            "status": "todo",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         }
       ],
@@ -244,7 +256,7 @@
         }
       ],
       "created_at": "2026-04-30T12:41:17.835616",
-      "updated_at": "2026-06-08T16:49:52.583701",
+      "updated_at": "2026-06-08T21:58:48.317757",
       "id": "69f34ded68c6fb916fd41def"
     },
     {
@@ -896,7 +908,12 @@
             "title": "Başlangıç",
             "content": "",
             "color": "var(--node-blue)",
-            "assignee": ""
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -910,7 +927,12 @@
             "title": "Yeni Not",
             "content": "İçerik...",
             "color": "var(--node-green)",
-            "assignee": ""
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -924,7 +946,69 @@
             "title": "İşlem",
             "content": "",
             "color": "var(--node-pink)",
-            "assignee": ""
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
+          }
+        },
+        {
+          "id": "3d84ded7-2174-49b3-b56e-74965bb72ba5",
+          "type": "flow_decision",
+          "position": {
+            "x": 1058.8001708984375,
+            "y": 260.39990234375
+          },
+          "data": {
+            "title": "Karar",
+            "content": "",
+            "color": "var(--node-purple)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
+          }
+        },
+        {
+          "id": "84f41c48-1a90-4ab2-a111-c3d738f00265",
+          "type": "flow_process",
+          "position": {
+            "x": 1374.8001098632812,
+            "y": 112.39999389648438
+          },
+          "data": {
+            "title": "İşlem",
+            "content": "",
+            "color": "var(--glass-bg)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
+          }
+        },
+        {
+          "id": "aa835d92-e3a2-44ad-bf7b-1ca28cf7355e",
+          "type": "flow_process",
+          "position": {
+            "x": 1392.4608443146378,
+            "y": 410.5130315500686
+          },
+          "data": {
+            "title": "İşlem",
+            "content": "",
+            "color": "var(--node-orange)",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         }
       ],
@@ -1016,13 +1100,34 @@
         {
           "id": "4cf1cde7-37b1-4e3d-b680-1860876db443",
           "source": "7ab97e7a-61ca-486b-bb39-879e1ddaa771",
-          "sourceHandle": "right",
           "target": "5308b0e5-d365-42da-81c8-77f6d88989d5",
+          "sourceHandle": "right",
+          "targetHandle": "left"
+        },
+        {
+          "id": "7dd817f6-1346-4daa-81e8-9f271f97eb66",
+          "source": "5308b0e5-d365-42da-81c8-77f6d88989d5",
+          "target": "3d84ded7-2174-49b3-b56e-74965bb72ba5",
+          "sourceHandle": "right",
+          "targetHandle": "left"
+        },
+        {
+          "id": "31b2bcdc-d92b-455c-9977-d3a586127d82",
+          "source": "3d84ded7-2174-49b3-b56e-74965bb72ba5",
+          "target": "84f41c48-1a90-4ab2-a111-c3d738f00265",
+          "sourceHandle": "right",
+          "targetHandle": "left"
+        },
+        {
+          "id": "ff164cd8-1709-404a-99a5-a30ab931064d",
+          "source": "3d84ded7-2174-49b3-b56e-74965bb72ba5",
+          "target": "aa835d92-e3a2-44ad-bf7b-1ca28cf7355e",
+          "sourceHandle": "right",
           "targetHandle": "left"
         }
       ],
       "created_at": "2026-05-14T18:26:58.755634",
-      "updated_at": "2026-06-08T16:50:15.623800",
+      "updated_at": "2026-06-08T21:58:00.702364",
       "id": "6a0613f21ad90f35dd78bd00"
     },
     {
@@ -1143,8 +1248,10 @@
           "data": {
             "title": "Merkez Konu",
             "content": "",
-            "color": "#ef4444",
+            "color": "var(--node-pink)",
+            "assignee": "",
             "assignee_name": "",
+            "status": null,
             "startDate": null,
             "endDate": null,
             "progress": null
@@ -1180,7 +1287,9 @@
             "title": "Alt Başlık",
             "content": "",
             "color": "#10b981",
+            "assignee": "",
             "assignee_name": "",
+            "status": null,
             "startDate": null,
             "endDate": null,
             "progress": null
@@ -1223,7 +1332,7 @@
         }
       ],
       "created_at": "2026-06-08T16:57:34.678661",
-      "updated_at": "2026-06-08T18:00:54.613069",
+      "updated_at": "2026-06-08T21:41:34.739043",
       "id": "6a26f47ec1d79baf6a42bbe3"
     },
     {
@@ -1282,13 +1391,32 @@
             "content": "Açıklama girin...",
             "color": "var(--node-blue)",
             "assignee": "",
-            "status": "done"
+            "assignee_name": "",
+            "status": "done",
+            "startDate": null,
+            "endDate": null,
+            "progress": null
+          }
+        },
+        {
+          "id": "4ded4360-9d01-45db-af0c-7222ee8bc141",
+          "type": "task",
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "data": {
+            "title": "Yeni Görev",
+            "content": "Açıklama girin...",
+            "color": "var(--node-blue)",
+            "assignee": "",
+            "status": "todo"
           }
         }
       ],
       "edges": [],
       "created_at": "2026-06-08T17:08:41.421164",
-      "updated_at": "2026-06-08T17:48:36.414570",
+      "updated_at": "2026-06-08T21:47:56.937524",
       "id": "6a26f719c1d79baf6a42bbe4"
     },
     {
@@ -1312,14 +1440,14 @@
             "assignee_name": "",
             "status": null,
             "startDate": "2026-06-08",
-            "endDate": "2026-06-14",
-            "progress": 56
+            "endDate": "2026-06-15",
+            "progress": 68
           }
         }
       ],
       "edges": [],
       "created_at": "2026-06-08T17:18:52.286147",
-      "updated_at": "2026-06-08T18:39:26.785445",
+      "updated_at": "2026-06-08T21:46:58.557058",
       "id": "6a26f97cc1d79baf6a42bbe5"
     },
     {
@@ -1338,7 +1466,13 @@
           "data": {
             "title": "ana konu",
             "content": "",
-            "color": "#6366f1"
+            "color": "#6366f1",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -1351,7 +1485,13 @@
           "data": {
             "title": "ana baslik",
             "content": "",
-            "color": "#6366f1"
+            "color": "#6366f1",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         },
         {
@@ -1364,7 +1504,13 @@
           "data": {
             "title": "alt baslik",
             "content": "",
-            "color": "#6366f1"
+            "color": "#6366f1",
+            "assignee": "",
+            "assignee_name": "",
+            "status": null,
+            "startDate": null,
+            "endDate": null,
+            "progress": null
           }
         }
       ],
@@ -1372,20 +1518,20 @@
         {
           "id": "hiir2nrr6",
           "source": "1i62i4hww",
-          "sourceHandle": "right",
           "target": "pyo1ey1z2",
+          "sourceHandle": "right",
           "targetHandle": "left"
         },
         {
           "id": "x943caq2u",
           "source": "pyo1ey1z2",
-          "sourceHandle": "right",
           "target": "jwmi54pdk",
+          "sourceHandle": "right",
           "targetHandle": "left"
         }
       ],
       "created_at": "2026-06-08T17:55:13.291203",
-      "updated_at": "2026-06-08T17:55:55.692347",
+      "updated_at": "2026-06-08T21:52:06.384775",
       "id": "6a270201bf292a127a835b16"
     }
   ],
@@ -1472,7 +1618,7 @@
       "is_team_folder": true,
       "team_id": "7ab0d558-95e2-46e3-a969-165964b6c1a8",
       "created_at": "2026-06-08T19:26:26.629936",
-      "updated_at": "2026-06-08T21:32:03.051722",
+      "updated_at": "2026-06-08T21:58:34.698346",
       "id": "6a2717622772c62c354317af"
     },
     {
@@ -1483,7 +1629,7 @@
       "is_team_folder": true,
       "team_id": "92c392e4-6969-424d-bcd1-0ebebff718be",
       "created_at": "2026-06-08T19:26:26.959458",
-      "updated_at": "2026-06-08T21:32:03.467058",
+      "updated_at": "2026-06-08T21:58:34.288838",
       "id": "6a2717622772c62c354317b0"
     },
     {

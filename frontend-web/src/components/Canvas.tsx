@@ -456,8 +456,10 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
         const node = nodes.find(n => n.id === id);
         if (!node) return;
         
-        const target = e.currentTarget as HTMLElement;
-        target.setPointerCapture(e.pointerId);
+        // Capture pointer events on the stable canvas container instead of the moving node
+        if (canvasRef.current) {
+            canvasRef.current.setPointerCapture(e.pointerId);
+        }
 
         // Snapshot before drag
         dragSnapshotRef.current = { nodes, edges };
@@ -652,8 +654,8 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
         return (
             <g key={edge.id}>
                 <path
+                    className="edge-path"
                     d={d}
-                    stroke="#4facfe" strokeWidth="2.5" fill="none"
                     markerEnd="url(#arrowhead)"
                 />
                 {/* clickable delete zone */}
@@ -684,9 +686,9 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
         const cx = (s.x + t.x) / 2;
         return (
             <path
+                className="active-edge-path"
                 d={`M ${s.x} ${s.y} C ${cx} ${s.y}, ${cx} ${t.y}, ${t.x} ${t.y}`}
-                stroke={snapTarget ? '#00e676' : '#9c27b0'}
-                strokeWidth="2.5" strokeDasharray="6,4" fill="none"
+                style={snapTarget ? { stroke: '#34d399' } : {}}
             />
         );
     };
@@ -707,16 +709,90 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
         const isMindmap = isMindmapRoot || isMindmapMain || isMindmapSub;
         const isSpecialShape = isFlowchart || isMindmap;
 
-        let typeLabel = '📝 Not';
-        if (isTask) typeLabel = '📋 Görev';
-        else if (isFlowStart) typeLabel = '🏁 Başlangıç';
-        else if (isFlowEnd) typeLabel = '🛑 Bitiş';
-        else if (isFlowProcess) typeLabel = '⚙️ İşlem';
-        else if (isFlowDecision) typeLabel = '❓ Karar';
-        else if (isFlowData) typeLabel = '📊 Veri';
-        else if (isMindmapRoot) typeLabel = '🧠 Merkez';
-        else if (isMindmapMain) typeLabel = '📍 Ana Konu';
-        else if (isMindmapSub) typeLabel = '📎 Alt Konu';
+        let typeLabel = 'Not';
+        let typeIcon = (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+            </svg>
+        );
+        if (isTask) {
+            typeLabel = 'Görev';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                </svg>
+            );
+        } else if (isFlowStart) {
+            typeLabel = 'Başlangıç';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <polygon points="10 8 16 12 10 16 10 8" />
+                </svg>
+            );
+        } else if (isFlowEnd) {
+            typeLabel = 'Bitiş';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <rect x="9" y="9" width="6" height="6" />
+                </svg>
+            );
+        } else if (isFlowProcess) {
+            typeLabel = 'İşlem';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <rect x="2" y="3" width="20" height="18" rx="2" ry="2" />
+                </svg>
+            );
+        } else if (isFlowDecision) {
+            typeLabel = 'Karar';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <polygon points="12 2 22 12 12 22 2 12 12 2" />
+                </svg>
+            );
+        } else if (isFlowData) {
+            typeLabel = 'Veri';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+            );
+        } else if (isMindmapRoot) {
+            typeLabel = 'Merkez';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <path d="M9.59 4.59A2 2 0 1 1 11 8H9m10.41 11.41A2 2 0 1 1 18 16h2" />
+                    <circle cx="12" cy="12" r="4" />
+                </svg>
+            );
+        } else if (isMindmapMain) {
+            typeLabel = 'Ana Konu';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                </svg>
+            );
+        } else if (isMindmapSub) {
+            typeLabel = 'Alt Konu';
+            typeIcon = (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+            );
+        }
 
         // const typeColor = isTask ? 'var(--node-text-blue)' : 'var(--node-text-green)';
 
@@ -788,7 +864,11 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                     })
                 }}
                 onPointerDown={(e) => handlePointerDown(e, node.id)}
+                onDragStart={(e) => e.preventDefault()}
             >
+                {isTask && node.data?.status && (
+                    <div className={`node-status-tag status-${node.data.status}`} />
+                )}
                 {(isFlowDecision || isFlowData) && (
                     <div className="shape-bg" style={{
                         position: 'absolute',
@@ -813,7 +893,12 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                         color: isTask ? 'var(--node-text-blue)' : 'var(--node-text-green)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
-                    }}>{typeLabel}</span>
+                        display: 'flex',
+                        alignItems: 'center',
+                    }}>
+                        {typeIcon}
+                        {typeLabel}
+                    </span>
                     <button
                         onClick={(e) => deleteNode(e, node.id)}
                         onPointerDown={e => e.stopPropagation()}
@@ -866,26 +951,19 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                 alignItems: 'center',
                                 gap: 4,
                             }}>
-                                👤 {node.data.assignee}
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, flexShrink: 0 }}>
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                                {node.data.assignee}
                             </div>
                         )}
                         {isTask && node.data?.status && (() => {
                             const sm = STATUS_META[node.data.status];
                             return (
-                                <div style={{
-                                    marginTop: 8,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    padding: '2px 8px',
-                                    borderRadius: 20,
-                                    background: sm.bg,
-                                    fontSize: '0.7rem',
-                                    fontWeight: 700,
-                                    color: sm.color,
-                                    letterSpacing: '0.3px',
-                                }}>
-                                    {sm.label}
+                                <div className={`status-badge status-${node.data.status}`}>
+                                    <span className="status-dot" />
+                                    <span className="status-text">{sm.label}</span>
                                 </div>
                             );
                         })()}
@@ -1335,9 +1413,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 16,
-                            border: '1px solid var(--glass-border)',
-                            borderRadius: 16,
-                            boxShadow: '0 12px 40px rgba(0,0,0,0.1)'
                         }}
                         onPointerDown={e => e.stopPropagation()}
                         onWheel={e => e.stopPropagation()}
@@ -1360,7 +1435,12 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                     <>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>Görev Özellikleri</h3>
-                                            <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>✕</button>
+                                            <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, color: 'var(--text-secondary)' }} title="Kapat">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                                </svg>
+                                            </button>
                                         </div>
                                         <div>
                                             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Görev Adı</label>
@@ -1762,9 +1842,6 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 16,
-                        border: '1px solid var(--glass-border)',
-                        borderRadius: 16,
-                        boxShadow: '0 12px 40px rgba(0,0,0,0.1)'
                     }}
                     onPointerDown={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
@@ -1789,7 +1866,12 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                 <>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>Özellikler</h3>
-                                        <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>✕</button>
+                                        <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, color: 'var(--text-secondary)' }} title="Kapat">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                            </svg>
+                                        </button>
                                     </div>
                                     <div>
                                         <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Başlık</label>
@@ -1852,20 +1934,10 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                                                 setNodes(updated);
                                                                 saveBoard(updated, edges);
                                                             }}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '7px 4px',
-                                                                borderRadius: 8,
-                                                                border: isActive ? `2px solid ${sm.color}` : '1.5px solid var(--glass-border)',
-                                                                background: isActive ? sm.bg : 'transparent',
-                                                                color: isActive ? sm.color : 'var(--text-secondary)',
-                                                                fontSize: '0.72rem',
-                                                                fontWeight: 700,
-                                                                cursor: 'pointer',
-                                                                transition: 'all 0.15s'
-                                                            }}
+                                                            className={`status-select-btn ${isActive ? 'active' : ''} status-${key}`}
                                                         >
-                                                            {sm.label}
+                                                            <span className="status-dot" />
+                                                            <span>{sm.label}</span>
                                                         </button>
                                                     );
                                                 })}
@@ -2037,16 +2109,18 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 16,
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 16,
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.1)'
                 }}
                 onPointerDown={e => e.stopPropagation()}
                 onWheel={e => e.stopPropagation()}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>Özellikler</h3>
-                        <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>✕</button>
+                        <button onClick={() => setSelectedNodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, color: 'var(--text-secondary)' }} title="Kapat">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
                     </div>
 
                     {(() => {
@@ -2129,23 +2203,10 @@ const Canvas: React.FC<CanvasProps> = ({ boardId, refreshKey, showToast: _showTo
                                                             setNodes(updated);
                                                             saveBoard(updated, edges);
                                                         }}
-                                                        style={{
-                                                            flex: 1,
-                                                            padding: '7px 4px',
-                                                            borderRadius: 8,
-                                                            border: isActive ? `2px solid ${sm.color}` : '1.5px solid var(--glass-border)',
-                                                            background: isActive ? sm.bg : 'transparent',
-                                                            color: isActive ? sm.color : 'var(--text-secondary)',
-                                                            fontSize: '0.72rem',
-                                                            fontWeight: 700,
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.15s',
-                                                            whiteSpace: 'nowrap',
-                                                        }}
-                                                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = sm.color; }}
-                                                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = 'var(--glass-border)'; }}
+                                                        className={`status-select-btn ${isActive ? 'active' : ''} status-${key}`}
                                                     >
-                                                        {sm.label}
+                                                        <span className="status-dot" />
+                                                        <span>{sm.label}</span>
                                                     </button>
                                                 );
                                             })}
@@ -2234,18 +2295,6 @@ const inputStyle: React.CSSProperties = {
     fontSize: '0.82rem',
     outline: 'none',
     boxSizing: 'border-box',
-};
-
-const saveBtnStyle: React.CSSProperties = {
-    flex: 1,
-    padding: '4px',
-    background: '#4facfe',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: '0.8rem',
-    fontWeight: 600,
 };
 
 const cancelBtnStyle: React.CSSProperties = {

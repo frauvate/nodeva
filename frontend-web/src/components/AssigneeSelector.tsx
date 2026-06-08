@@ -111,14 +111,25 @@ const AssigneeSelector: React.FC<AssigneeSelectorProps> = ({
                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {currentAssignee}
                         </span>
-                        <span
+                        <button
                             onClick={e => { e.stopPropagation(); onSelect(''); }}
-                            style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem', marginLeft: 2 }}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', marginLeft: 2 }}
                             title="Atamayı kaldır"
-                        >✕</span>
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
                     </>
                 ) : (
-                    <span style={{ color: 'var(--text-muted)' }}>👤 Kişi seç...</span>
+                    <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        Kişi seç...
+                    </span>
                 )}
             </div>
 
@@ -129,10 +140,12 @@ const AssigneeSelector: React.FC<AssigneeSelectorProps> = ({
                     top: 'calc(100% + 6px)',
                     left: 0,
                     right: 0,
-                    background: 'var(--panel-bg)',
-                    border: '1px solid var(--glass-border)',
+                    background: 'rgba(14, 14, 20, 0.92)',
+                    backdropFilter: 'blur(24px)',
+                    WebkitBackdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255,255,255,0.10)',
                     borderRadius: 12,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                    boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05)',
                     zIndex: 500,
                     overflow: 'hidden',
                     minWidth: 240,
@@ -195,7 +208,9 @@ const AssigneeSelector: React.FC<AssigneeSelectorProps> = ({
                                     </div>
                                 </div>
                                 {currentAssignee === member.email && (
-                                    <span style={{ color: 'var(--accent-primary)', fontSize: '0.9rem' }}>✓</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-primary)', flexShrink: 0 }}>
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
                                 )}
                             </div>
                         ))}
